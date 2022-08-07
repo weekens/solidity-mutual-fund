@@ -94,4 +94,8 @@ contract('MutualFund', (accounts) => {
 
     expect(proposalsAfter).to.have.lengthOf(0);
   });
+
+  it('should be able to exit with funds');
+
+  it('should be able to invite a new member');
 });
