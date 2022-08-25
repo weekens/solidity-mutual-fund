@@ -18,11 +18,11 @@
  *
  */
 
-// require('dotenv').config();
-// const mnemonic = process.env["MNEMONIC"];
-// const infuraProjectId = process.env["INFURA_PROJECT_ID"];
+require('dotenv').config();
+const mnemonic = process.env["BLAH"];
+const infuraProjectId = 'f1232cdd737a4c2490546725dac1e069';
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
 
 module.exports = {
   /**
@@ -48,22 +48,30 @@ module.exports = {
     //  network_id: "*",       // Any network (default: none)
     // },
     //
-    // goerli: {
-    //   provider: () => new HDWalletProvider(mnemonic, `https://goerli.infura.io/v3/${infuraProjectId}`),
-    //   network_id: 5,       // Goerli's id
-    //   chain_id: 5
-    // }
+    goerli: {
+      provider: () => new HDWalletProvider(mnemonic, `https://goerli.infura.io/v3/${infuraProjectId}`),
+      network_id: 5,       // Goerli's id
+      chain_id: 5
+    },
+    rinkeby: {
+      provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${infuraProjectId}`),
+      network_id: 4,
+      chain_id: 4
+    },
+    mainnet: {
+      provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/v3/${infuraProjectId}`),
+      network_id: 1,
+      chain_id: 1
+    }
   },
 
-  // Set default mocha options here, use special reporters etc.
   mocha: {
     // timeout: 100000
   },
 
-  // Configure your compilers
   compilers: {
     solc: {
-      version: "0.8.4"      // Fetch exact version from solc-bin
+      version: "0.8.0"
     }
   }
 };

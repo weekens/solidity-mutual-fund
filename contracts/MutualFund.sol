@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.4;
+pragma solidity ^0.6.6;
+pragma experimental ABIEncoderV2;
 
 contract MutualFund {
 
@@ -39,7 +40,7 @@ contract MutualFund {
     uint proposalIdCounter = 1;
     Proposal[] proposals;
 
-    constructor() {
+    constructor() public {
         members.push(Member({ addr: msg.sender, balance: 0 }));
     }
 

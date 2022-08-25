@@ -1,5 +1,5 @@
-const MutualFund = artifacts.require('MutualFund');
+// const MutualFund = artifacts.require('MutualFund');
 
 module.exports = function(deployer) {
-  deployer.deploy(MutualFund);
+  // deployer.deploy(MutualFund);
 };
