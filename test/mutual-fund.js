@@ -88,7 +88,7 @@ contract('MutualFund', (accounts) => {
 
   it('should be able to invite a new member');
 
-  it('should be able to add asset', async () => {
+  it('should be able to add asset and make a swap', async () => {
     const assetToken = await TestToken.new();
     const asset = await MutualFundAsset.new(assetToken.address);
     const fund = await MutualFund.new({ from: accounts[0] });
@@ -109,25 +109,63 @@ contract('MutualFund', (accounts) => {
     );
     await voteForProposal(fund, accounts[0], assetProposalId);
 
-    const executeResult = await fund.executeProposal(
-      assetProposalId,
-      { from: accounts[0] }
-    );
-
-    truffleAssert.eventEmitted(
-      executeResult,
-      "ProposalExecuted",
-      (ev) => {
-        return ev.id.toNumber() === assetProposalId;
-      }
+    await executeProposal(
+      fund,
+      accounts[0],
+      assetProposalId
     );
 
     const newAssets = await fund.getAssets.call();
 
     expect(newAssets).to.have.lengthOf(1);
     expect(newAssets[0]).to.be.equal(asset.address);
+
+    await depositFunds(fund, accounts[0], 20);
+
+    const swapProposalId = await submitProposal(
+      fund,
+      accounts[0],
+      {
+        proposalType: MutualFund.ProposalType.Swap,
+        amount: 20,
+        addr1: fund.address,
+        addr2: asset.address
+      }
+    );
+    await voteForProposal(fund, accounts[0], swapProposalId);
+    await executeProposal(
+      fund,
+      accounts[0],
+      swapProposalId
+    );
   });
 });
+
+async function depositFunds(fund, from, amount) {
+  const proposalId = await submitProposal(
+    fund,
+    from,
+    {
+      proposalType: MutualFund.ProposalType.DepositFunds,
+      amount,
+      addr1: zeroAddress,
+      addr2: zeroAddress
+    }
+  );
+
+  await voteForProposal(
+    fund,
+    from,
+    proposalId
+  );
+
+  await executeProposal(
+    fund,
+    from,
+    proposalId,
+    amount
+  );
+}
 
 async function submitProposal(fund, from, proposal) {
   const submitProposalResult = await fund.submitProposal(
@@ -161,6 +199,21 @@ async function voteForProposal(fund, from, proposalId) {
     "NewVote",
     (ev) => {
       return ev.proposalId.toNumber() === proposalId && ev.memberAddress === from;
+    }
+  );
+}
+
+async function executeProposal(fund, from, proposalId, value) {
+  const executeResult = await fund.executeProposal(
+    proposalId,
+    { from, value }
+  );
+
+  truffleAssert.eventEmitted(
+    executeResult,
+    "ProposalExecuted",
+    (ev) => {
+      return ev.id.toNumber() === proposalId;
     }
   );
 }
