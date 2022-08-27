@@ -12,6 +12,7 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "@truffle/hdwallet-provider": "^2.0.13",
+    "@truffle/contract": "^4.5.23",
     "chai": "^4.3.6",
     "ethers": "^5.7.0",
     "truffle": "^5.3.14",
