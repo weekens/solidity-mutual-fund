@@ -125,6 +125,7 @@ contract('MutualFund', (accounts) => {
     const newAssets = await fund.getAssets.call();
 
     expect(newAssets).to.have.lengthOf(1);
+    expect(newAssets[0]).to.be.equal(asset.address);
   });
 });
 
