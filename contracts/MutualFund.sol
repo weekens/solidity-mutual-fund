@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.6.6;
+pragma solidity >=0.6.6;
 pragma experimental ABIEncoderV2;
 
+import "./IAsset.sol";
+
+// Mutual fund contract.
 contract MutualFund {
 
     struct Member {
@@ -10,12 +13,15 @@ contract MutualFund {
     }
 
     enum ProposalType {
-        DepositFunds
+        DepositFunds,
+        AddAsset
     }
 
     struct ProposalRequest {
         ProposalType proposalType;
         uint amount;
+        address addr1;
+        address addr2;
     }
 
     struct Vote {
@@ -36,11 +42,12 @@ contract MutualFund {
 
     event NewVote(uint proposalId, address memberAddress, bool support);
 
-    Member[] members;
-    uint proposalIdCounter = 1;
-    Proposal[] proposals;
+    Member[] private members;
+    uint private proposalIdCounter = 1;
+    Proposal[] private proposals;
+    IAsset[] private assets;
 
-    constructor() public {
+    constructor() {
         members.push(Member({ addr: msg.sender, balance: 0 }));
     }
 
@@ -50,6 +57,10 @@ contract MutualFund {
 
     function getMember(address memberAddress) public view returns (Member memory) {
         return findMemberByAddress(memberAddress);
+    }
+
+    function getAssets() public view returns (IAsset[] memory) {
+        return assets;
     }
 
     modifier membersOnly() {
@@ -88,6 +99,14 @@ contract MutualFund {
             require(proposal.request.amount == msg.value, "The sent funds amount differs from proposed");
             Member storage member = findMemberByAddress(proposal.author);
             member.balance += msg.value;
+        }
+        else if (proposal.request.proposalType == ProposalType.AddAsset) {
+            IAsset asset = IAsset(proposal.request.addr1);
+
+            // Check that this is a valid asset address.
+            asset.getBalance();
+
+            assets.push(asset);
         }
         else {
             revert("Unknown proposal type");
