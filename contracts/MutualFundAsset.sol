@@ -6,13 +6,13 @@ import "./IAsset.sol";
 // The actual contract for the mutual fund asset.
 contract MutualFundAsset is IAsset {
 
-    address addr;
+    address tokenAddress;
 
-    constructor(address initAddr) {
-        addr = initAddr;
+    constructor(address initTokenAddr) {
+        tokenAddress = initTokenAddr;
     }
 
-    function getBalance() external override(IAsset) view returns (uint) {
-        return addr.balance;
+    function getTokenAddress() external override(IAsset) view returns (address) {
+        return tokenAddress;
     }
 }

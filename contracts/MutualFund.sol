@@ -109,7 +109,7 @@ contract MutualFund {
             IAsset asset = IAsset(proposal.request.addresses[0]);
 
             // Check that this is a valid asset address.
-            asset.getBalance();
+            asset.getTokenAddress();
 
             assets.push(asset);
         }
@@ -130,11 +130,10 @@ contract MutualFund {
         address addr2 = request.addresses[1];
 
         if (addr1 == address(this)) {
-            findAssetByAddress(addr2); // Check if asset exists.
+            IAsset asset = findAssetByAddress(addr2);
             address[] memory path = new address[](2);
-            address tokenAddr = request.addresses[2];
             path[0] = uniswapRouter.WETH();
-            path[1] = tokenAddr;
+            path[1] = asset.getTokenAddress();
             uniswapRouter.swapExactETHForTokens{ value: request.amount }(
                 0,
                 path,
@@ -160,9 +159,9 @@ contract MutualFund {
         }
         else if (request.proposalType == ProposalType.Swap) {
             require(request.amount > 0, "Invalid proposal request: amount should be positive");
-            require(request.addresses.length > 2, "Invalid proposal request: number of addresses should be at least 3");
+            require(request.addresses.length == 2, "Invalid proposal request: number of addresses should be 2");
             require(
-                request.addresses[0] != address(0) && request.addresses[1] != address(0) && request.addresses[2] != address(0),
+                request.addresses[0] != address(0) && request.addresses[1] != address(0),
                 "Invalid proposal request: addresses should be non-zero"
             );
             require(

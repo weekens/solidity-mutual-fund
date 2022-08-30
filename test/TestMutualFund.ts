@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { MutualFund } from "../typechain-types";
 import { BigNumber, BigNumberish } from "ethers";
+const ERC20 = require("@openzeppelin/contracts/build/contracts/ERC20.json");
 
 enum ProposalType {
     DepositFunds,
@@ -92,10 +93,15 @@ describe("MutualFund", function () {
 
     it("should be able to add asset and make a swap", async () => {
         const assetTokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC
+        const assetTokenContract = new ethers.Contract(assetTokenAddress, ERC20.abi, ethers.provider);
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const MutualFundAsset = await ethers.getContractFactory("MutualFundAsset");
         const asset = await MutualFundAsset.deploy(assetTokenAddress);
         const fund = await MutualFund.deploy();
+
+        const initialAssetBalance = await assetTokenContract.balanceOf(asset.address);
+
+        expect(initialAssetBalance.toNumber()).to.be.equal(0);
 
         const assets = await fund.getAssets();
 
@@ -133,7 +139,7 @@ describe("MutualFund", function () {
             {
                 proposalType: ProposalType.Swap,
                 amount: ethers.utils.parseEther("1"),
-                addresses: [fund.address, asset.address, assetTokenAddress]
+                addresses: [fund.address, asset.address]
             }
         );
         await voteForProposal(fund, signer.address, swapProposalId);
@@ -142,6 +148,14 @@ describe("MutualFund", function () {
             signer.address,
             swapProposalId
         );
+
+        const endingFundBalance = await ethers.provider.getBalance(fund.address);
+
+        expect(endingFundBalance.toNumber()).to.be.equal(0);
+
+        const endingAssetBalance = await assetTokenContract.balanceOf(asset.address);
+
+        expect(endingAssetBalance.gt(0)).to.be.true;
     });
 });
 
