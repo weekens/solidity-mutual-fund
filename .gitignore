@@ -1,4 +1,11 @@
-build
 node_modules
-.idea
 .env
+coverage
+coverage.json
+typechain
+typechain-types
+
+#Hardhat files
+cache
+artifacts
+

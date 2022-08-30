@@ -3,6 +3,7 @@ pragma solidity >=0.6.6;
 pragma experimental ABIEncoderV2;
 
 import "./IAsset.sol";
+import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol';
 
 // Mutual fund contract.
 contract MutualFund {
@@ -14,14 +15,14 @@ contract MutualFund {
 
     enum ProposalType {
         DepositFunds,
-        AddAsset
+        AddAsset,
+        Swap
     }
 
     struct ProposalRequest {
         ProposalType proposalType;
         uint amount;
-        address addr1;
-        address addr2;
+        address[] addresses;
     }
 
     struct Vote {
@@ -46,9 +47,11 @@ contract MutualFund {
     uint private proposalIdCounter = 1;
     Proposal[] private proposals;
     IAsset[] private assets;
+    IUniswapV2Router01 private uniswapRouter;
 
     constructor() {
         members.push(Member({ addr: msg.sender, balance: 0 }));
+        uniswapRouter = IUniswapV2Router01(0xf164fC0Ec4E93095b804a4795bBe1e041497b92a);
     }
 
     function getMembers() public view returns (Member[] memory) {
@@ -69,6 +72,8 @@ contract MutualFund {
     }
 
     function submitProposal(ProposalRequest memory proposalRequest) membersOnly public returns (uint) {
+        validateProposalRequest(proposalRequest);
+
         Proposal storage newProposal = proposals.push(); // Allocate a new proposal.
         uint newProposalId = proposalIdCounter++;
         newProposal.id = newProposalId;
@@ -101,12 +106,15 @@ contract MutualFund {
             member.balance += msg.value;
         }
         else if (proposal.request.proposalType == ProposalType.AddAsset) {
-            IAsset asset = IAsset(proposal.request.addr1);
+            IAsset asset = IAsset(proposal.request.addresses[0]);
 
             // Check that this is a valid asset address.
             asset.getBalance();
 
             assets.push(asset);
+        }
+        else if (proposal.request.proposalType == ProposalType.Swap) {
+            executeSwapProposal(proposal.request);
         }
         else {
             revert("Unknown proposal type");
@@ -115,6 +123,53 @@ contract MutualFund {
         removeProposal(proposalId);
 
         emit ProposalExecuted(proposalId);
+    }
+
+    function executeSwapProposal(ProposalRequest storage request) private {
+        address addr1 = request.addresses[0];
+        address addr2 = request.addresses[1];
+
+        if (addr1 == address(this)) {
+            findAssetByAddress(addr2); // Check if asset exists.
+            address[] memory path = new address[](2);
+            address tokenAddr = request.addresses[2];
+            path[0] = uniswapRouter.WETH();
+            path[1] = tokenAddr;
+            uniswapRouter.swapExactETHForTokens{ value: request.amount }(
+                0,
+                path,
+                addr2,
+                block.timestamp + 60 * 60
+            );
+        }
+        else if (addr2 == address(this)) {
+            revert("Not implemented yet.");
+        }
+        else {
+            revert("Not implemented yet.");
+        }
+    }
+
+    function validateProposalRequest(ProposalRequest memory request) private pure {
+        if (request.proposalType == ProposalType.DepositFunds) {
+            require(request.amount > 0, "Invalid proposal request: amount should be positive");
+        }
+        else if (request.proposalType == ProposalType.AddAsset) {
+            require(request.addresses.length == 1, "Invalid proposal request: number of addresses should be 1");
+            require(request.addresses[0] != address(0), "Invalid proposal request: first address should be non-zero");
+        }
+        else if (request.proposalType == ProposalType.Swap) {
+            require(request.amount > 0, "Invalid proposal request: amount should be positive");
+            require(request.addresses.length > 2, "Invalid proposal request: number of addresses should be at least 3");
+            require(
+                request.addresses[0] != address(0) && request.addresses[1] != address(0) && request.addresses[2] != address(0),
+                "Invalid proposal request: addresses should be non-zero"
+            );
+            require(
+                request.addresses[0] != request.addresses[1],
+                "Invalid proposal request: first and second address should not be equal"
+            );
+        }
     }
 
     function removeProposal(uint proposalId) private {
@@ -148,6 +203,14 @@ contract MutualFund {
         }
 
         revert("Proposal not found");
+    }
+
+    function findAssetByAddress(address addr) private view returns (IAsset) {
+        for (uint i = 0; i < assets.length; i++) {
+            if (address(assets[i]) == addr) return assets[i];
+        }
+
+        revert("Asset not found");
     }
 
     function checkCanExecuteProposal(address memberAddress, Proposal storage proposal) private view {
