@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { MutualFund } from '../typechain-types';
-import { BigNumber, BigNumberish } from 'ethers';
+import { MutualFund } from "../typechain-types";
+import { BigNumber, BigNumberish } from "ethers";
 
 enum ProposalType {
     DepositFunds,
@@ -11,7 +11,7 @@ enum ProposalType {
 
 describe("MutualFund", function () {
 
-    it('should add sender to members upon creation', async () => {
+    it("should add sender to members upon creation", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const fund = await MutualFund.deploy();
 
@@ -26,7 +26,7 @@ describe("MutualFund", function () {
         expect(member).to.not.be.null;
     });
 
-    it('should be able to deposit funds with proposal', async () => {
+    it("should be able to deposit funds with proposal", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const fund = await MutualFund.deploy();
         const [signer] = await ethers.getSigners();
@@ -84,11 +84,13 @@ describe("MutualFund", function () {
         expect(proposalsAfter).to.have.lengthOf(0);
     });
 
-    it('should be able to exit with funds');
+    it("should be able to exit with funds");
 
-    it('should be able to invite a new member');
+    it("should be able to invite a new member");
 
-    it('should be able to add asset and make a swap', async () => {
+    it("should be able to kick a member");
+
+    it("should be able to add asset and make a swap", async () => {
         const assetTokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const MutualFundAsset = await ethers.getContractFactory("MutualFundAsset");
