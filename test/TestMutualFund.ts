@@ -236,6 +236,8 @@ describe("MutualFund", function () {
     });
 
     it("should exit proportionally having multiple assets");
+
+    it("should take the size of the shares into account during voting");
 });
 
 async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish) {
