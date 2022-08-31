@@ -90,29 +90,7 @@ describe("MutualFund", function () {
         const fund = await MutualFund.deploy();
         const [signer] = await ethers.getSigners();
 
-        const proposalId = await submitProposal(
-            fund,
-            signer.address,
-            {
-                proposalType: ProposalType.DepositFunds,
-                amount: 20,
-                addresses: []
-            }
-        );
-
-        await voteForProposal(
-            fund,
-            signer.address,
-            proposalId
-        );
-
-        // Send the sum.
-        await expect(
-            fund.executeProposal(
-                proposalId,
-                { from: signer.address, value: 1000 }
-            )
-        ).to.emit(fund, "ProposalExecuted").withArgs(proposalId);
+        await depositFunds(fund, signer.address, 1000);
 
         const beginningFundBalance = await ethers.provider.getBalance(fund.address);
 
