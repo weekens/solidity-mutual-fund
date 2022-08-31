@@ -234,6 +234,8 @@ describe("MutualFund", function () {
 
         expect(endingAssetBalance.gt(0)).to.be.true;
     });
+
+    it("should exit proportionally having multiple assets");
 });
 
 async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish) {
