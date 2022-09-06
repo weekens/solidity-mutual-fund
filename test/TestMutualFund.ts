@@ -105,7 +105,7 @@ describe("MutualFund", function () {
         // Try to exit with wrong sum.
         await expect(
             fund.exit(120)
-        ).to.revertedWith("Exit share should be maximum 100%");
+        ).to.revertedWith("Invalid percentage value");
 
         // Member performs partial exit (60%).
         await fund.exit(60);

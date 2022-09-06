@@ -3,10 +3,13 @@ pragma solidity >=0.6.6;
 pragma experimental ABIEncoderV2;
 
 import "./IAsset.sol";
-import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol';
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol";
+import "abdk-libraries-solidity/ABDKMath64x64.sol";
 
 // Mutual fund contract.
 contract MutualFund {
+
+    using ABDKMath64x64 for int128;
 
     struct Member {
         address addr;
@@ -44,6 +47,7 @@ contract MutualFund {
     event NewVote(uint proposalId, address memberAddress, bool support);
 
     Member[] private members;
+    uint private totalBalance = 0; // Total number of share tokens minted.
     uint private proposalIdCounter = 1;
     Proposal[] private proposals;
     IAsset[] private assets;
@@ -59,7 +63,8 @@ contract MutualFund {
     }
 
     function getMember(address memberAddress) public view returns (Member memory) {
-        return findMemberByAddress(memberAddress);
+        (Member memory member,) = findMemberByAddress(memberAddress);
+        return member;
     }
 
     function getAssets() public view returns (IAsset[] memory) {
@@ -102,8 +107,9 @@ contract MutualFund {
 
         if (proposal.request.proposalType == ProposalType.DepositFunds) {
             require(proposal.request.amount == msg.value, "The sent funds amount differs from proposed");
-            Member storage member = findMemberByAddress(proposal.author);
+            (Member storage member,) = findMemberByAddress(proposal.author);
             member.balance += msg.value;
+            totalBalance = msg.value;
         }
         else if (proposal.request.proposalType == ProposalType.AddAsset) {
             IAsset asset = IAsset(proposal.request.addresses[0]);
@@ -149,6 +155,27 @@ contract MutualFund {
         }
     }
 
+    function exit(uint percent) membersOnly public {
+        require(percent > 0 && percent <= 100, "Invalid percentage value");
+
+        (Member storage member, uint memberIndex) = findMemberByAddress(msg.sender);
+        uint balanceToBurn = ABDKMath64x64.divu(member.balance, uint256(100)).mulu(percent);
+        uint toReturn = ABDKMath64x64.divu(balanceToBurn, totalBalance).mulu(address(this).balance);
+
+        if (balanceToBurn > 0) {
+            member.balance -= balanceToBurn;
+            totalBalance -= balanceToBurn;
+        }
+
+        if (percent == 100) {
+            removeMember(memberIndex);
+        }
+
+        if (toReturn > 0) {
+            payable(member.addr).transfer(toReturn);
+        }
+    }
+
     function validateProposalRequest(ProposalRequest memory request) private pure {
         if (request.proposalType == ProposalType.DepositFunds) {
             require(request.amount > 0, "Invalid proposal request: amount should be positive");
@@ -171,15 +198,6 @@ contract MutualFund {
         }
     }
 
-    function removeProposal(uint proposalId) private {
-        (, uint index) = findProposalById(proposalId);
-
-        for(uint i = index; i < proposals.length - 1; i++) {
-            proposals[i] = proposals[i + 1];
-        }
-        proposals.pop();
-    }
-
     function hasMemberWithAddress(address addr) private view returns (bool) {
         for (uint i = 0; i < members.length; i++) {
             if (members[i].addr == addr) return true;
@@ -188,12 +206,19 @@ contract MutualFund {
         return false;
     }
 
-    function findMemberByAddress(address addr) private view returns (Member storage) {
+    function findMemberByAddress(address addr) private view returns (Member storage, uint memberIndex) {
         for (uint i = 0; i < members.length; i++) {
-            if (members[i].addr == addr) return members[i];
+            if (members[i].addr == addr) return (members[i], i);
         }
 
         revert("Member not found");
+    }
+
+    function removeMember(uint index) private {
+        for(uint i = index; i < members.length - 1; i++) {
+            members[i] = members[i + 1];
+        }
+        members.pop();
     }
 
     function findProposalById(uint proposalId) private view returns (Proposal storage, uint index) {
@@ -202,6 +227,15 @@ contract MutualFund {
         }
 
         revert("Proposal not found");
+    }
+
+    function removeProposal(uint proposalId) private {
+        (, uint index) = findProposalById(proposalId);
+
+        for(uint i = index; i < proposals.length - 1; i++) {
+            proposals[i] = proposals[i + 1];
+        }
+        proposals.pop();
     }
 
     function findAssetByAddress(address addr) private view returns (IAsset) {
