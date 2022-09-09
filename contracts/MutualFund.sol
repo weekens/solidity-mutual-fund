@@ -46,6 +46,8 @@ contract MutualFund {
 
     event NewVote(uint proposalId, address memberAddress, bool support);
 
+    event Exit(address memberAddress, uint8 percentage, uint toReturn);
+
     Member[] private members;
     uint private totalBalance = 0; // Total number of share tokens minted.
     uint private proposalIdCounter = 1;
@@ -155,7 +157,7 @@ contract MutualFund {
         }
     }
 
-    function exit(uint percent) membersOnly public {
+    function exit(uint8 percent) membersOnly public {
         require(percent > 0 && percent <= 100, "Invalid percentage value");
 
         (Member storage member, uint memberIndex) = findMemberByAddress(msg.sender);
@@ -174,6 +176,8 @@ contract MutualFund {
         if (toReturn > 0) {
             payable(member.addr).transfer(toReturn);
         }
+
+        emit Exit(member.addr, percent, toReturn);
     }
 
     function validateProposalRequest(ProposalRequest memory request) private pure {
