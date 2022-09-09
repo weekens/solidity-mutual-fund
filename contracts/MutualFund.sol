@@ -161,6 +161,7 @@ contract MutualFund {
         require(percent > 0 && percent <= 100, "Invalid percentage value");
 
         (Member storage member, uint memberIndex) = findMemberByAddress(msg.sender);
+        address memberAddress = member.addr;
         uint balanceToBurn = ABDKMath64x64.divu(member.balance, uint256(100)).mulu(percent);
         uint toReturn = ABDKMath64x64.divu(balanceToBurn, totalBalance).mulu(address(this).balance);
 
@@ -174,10 +175,10 @@ contract MutualFund {
         }
 
         if (toReturn > 0) {
-            payable(member.addr).transfer(toReturn);
+            payable(memberAddress).transfer(toReturn);
         }
 
-        emit Exit(member.addr, percent, toReturn);
+        emit Exit(memberAddress, percent, toReturn);
     }
 
     function validateProposalRequest(ProposalRequest memory request) private pure {

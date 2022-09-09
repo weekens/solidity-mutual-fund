@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { MutualFund } from "../typechain-types";
 import { BigNumber, BigNumberish } from "ethers";
-import { anyUint } from '@nomicfoundation/hardhat-chai-matchers/withArgs';
 const ERC20 = require("@openzeppelin/contracts/build/contracts/ERC20.json");
 
 enum ProposalType {
@@ -108,25 +107,15 @@ describe("MutualFund", function () {
 
         const signerBalanceBeforeExit = await ethers.provider.getBalance(signer.address);
 
-        console.log("signerBalanceBeforeExit =", signerBalanceBeforeExit.toString()); // TODO
-
         // Member performs partial exit (60%).
         const partialExitTx = await fund.exit(60);
-
         const partialExitResult = await partialExitTx.wait();
-
         const partialExitGasUsed = partialExitResult.effectiveGasPrice.mul(partialExitResult.cumulativeGasUsed);
-
-        console.log("partialExitGasUsed =", partialExitGasUsed.toString()); // TODO
-
         const partialExitEvent = partialExitResult.events?.find(evt => evt.event === "Exit")
 
         expect(partialExitEvent).to.not.be.undefined;
 
         const partialExitToReturn = partialExitEvent?.args?.["toReturn"];
-
-        console.log("partialExitToReturn =", partialExitToReturn.toString()); // TODO
-
         const fundMembersAfterPartialExit = await fund.getMembers();
 
         expect(fundMembersAfterPartialExit).to.have.lengthOf(1);
@@ -140,34 +129,19 @@ describe("MutualFund", function () {
         expect(fundBalanceAfterPartialExit.eq(beginningFundBalance.sub(partialExitToReturn))).to.be.true;
 
         const signerBalanceAfterPartialExit = await ethers.provider.getBalance(signer.address);
+        const partialExitCalcResult = signerBalanceBeforeExit.sub(partialExitGasUsed).add(partialExitToReturn);
 
-        console.log("signerBalanceAfterPartialExit =", signerBalanceAfterPartialExit.toString()); // TODO
-
-        const calcResult = signerBalanceBeforeExit.sub(partialExitGasUsed).add(partialExitToReturn);
-
-        console.log("calcResult =", calcResult.toString()); // TODO
-
-        expect(signerBalanceAfterPartialExit.eq(calcResult)).to.be.true;
+        expect(signerBalanceAfterPartialExit.eq(partialExitCalcResult)).to.be.true;
 
         // Member performs full exit (100%).
         const fullExitTx = await fund.exit(100);
-
         const fullExitResult = await fullExitTx.wait();
-
-        console.log("fullExitResult =", fullExitResult); // TODO
-
         const fullExitGasUsed = fullExitResult.effectiveGasPrice.mul(fullExitResult.cumulativeGasUsed);
-
-        console.log("fullExitGasUsed =", fullExitGasUsed.toString()); // TODO
-
         const fullExitEvent = fullExitResult.events?.find(evt => evt.event === "Exit")
 
         expect(fullExitEvent).to.not.be.undefined;
 
         const fullExitToReturn = fullExitEvent?.args?.["toReturn"];
-
-        console.log("fullExitToReturn =", fullExitToReturn.toString()); // TODO
-
         const fundMembersAfterFullExit = await fund.getMembers();
 
         expect(fundMembersAfterFullExit).to.have.lengthOf(0);
@@ -177,14 +151,9 @@ describe("MutualFund", function () {
         expect(fundBalanceAfterFullExit.toNumber()).to.be.equal(0);
 
         const signerBalanceAfterFullExit = await ethers.provider.getBalance(signer.address);
-
-        console.log("signerBalanceAfterFullExit =", signerBalanceAfterFullExit.toString()); // TODO
-
         const fullExitCalcResult = signerBalanceAfterPartialExit.sub(fullExitGasUsed).add(fullExitToReturn);
 
-        console.log("fullExitCalcResult =", fullExitCalcResult.toString()); // TODO
-
-        expect(signerBalanceAfterFullExit.gt(fullExitCalcResult)).to.be.true; // TODO: we do not get 401 refund
+        expect(signerBalanceAfterFullExit.eq(fullExitCalcResult)).to.be.true;
     });
 
     it("should be able to invite a new member");
@@ -294,8 +263,6 @@ async function submitProposal(fund: MutualFund, from: string, proposal: MutualFu
         { from }
     );
     const submitProposalResult = await submitProposalTx.wait();
-
-    submitProposalResult.gasUsed // TODO
 
     const newProposalEvent = submitProposalResult.events?.find(evt => evt.event === "NewProposal")
 
