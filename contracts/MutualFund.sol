@@ -162,7 +162,15 @@ contract MutualFund {
 
         (Member storage member, uint memberIndex) = findMemberByAddress(msg.sender);
         address memberAddress = member.addr;
-        uint balanceToBurn = ABDKMath64x64.divu(member.balance, uint256(100)).mulu(percent);
+        uint balanceToBurn = 0;
+
+        if (percent == 100) {
+            balanceToBurn = member.balance;
+        }
+        else {
+            balanceToBurn = ABDKMath64x64.divu(member.balance, uint256(100)).mulu(percent);
+        }
+
         uint toReturn = ABDKMath64x64.divu(balanceToBurn, totalBalance).mulu(address(this).balance);
 
         if (balanceToBurn > 0) {
