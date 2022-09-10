@@ -156,6 +156,74 @@ describe("MutualFund", function () {
         expect(signerBalanceAfterFullExit.eq(fullExitCalcResult)).to.be.true;
     });
 
+    it("should be able to exit with funds (big sums)", async () => {
+        const MutualFund = await ethers.getContractFactory("MutualFund");
+        const fund = await MutualFund.deploy();
+        const [signer] = await ethers.getSigners();
+
+        const depositAmount = ethers.utils.parseEther("100");
+
+        await depositFunds(fund, signer.address, depositAmount);
+
+        const beginningFundBalance = await ethers.provider.getBalance(fund.address);
+
+        expect(beginningFundBalance.eq(depositAmount)).to.be.true;
+
+        const memberBalanceBeforeExit = (await fund.getMember(signer.address)).balance;
+
+        expect(memberBalanceBeforeExit.eq(depositAmount)).to.be.true;
+
+        const signerBalanceBeforeExit = await ethers.provider.getBalance(signer.address);
+
+        // Member performs partial exit (60%).
+        const partialExitTx = await fund.exit(60);
+        const partialExitResult = await partialExitTx.wait();
+        const partialExitGasUsed = partialExitResult.effectiveGasPrice.mul(partialExitResult.cumulativeGasUsed);
+        const partialExitEvent = partialExitResult.events?.find(evt => evt.event === "Exit")
+
+        expect(partialExitEvent).to.not.be.undefined;
+
+        const partialExitToReturn = partialExitEvent?.args?.["toReturn"];
+        const fundMembersAfterPartialExit = await fund.getMembers();
+
+        expect(fundMembersAfterPartialExit).to.have.lengthOf(1);
+
+        const memberBalanceAfterPartialExit = (await fund.getMember(signer.address)).balance;
+
+        expect(memberBalanceAfterPartialExit.eq(ethers.utils.parseEther("40"))).to.be.true;
+
+        const fundBalanceAfterPartialExit = await ethers.provider.getBalance(fund.address);
+
+        expect(fundBalanceAfterPartialExit.eq(beginningFundBalance.sub(partialExitToReturn))).to.be.true;
+
+        const signerBalanceAfterPartialExit = await ethers.provider.getBalance(signer.address);
+        const partialExitCalcResult = signerBalanceBeforeExit.sub(partialExitGasUsed).add(partialExitToReturn);
+
+        expect(signerBalanceAfterPartialExit.eq(partialExitCalcResult)).to.be.true;
+
+        // Member performs full exit (100%).
+        const fullExitTx = await fund.exit(100);
+        const fullExitResult = await fullExitTx.wait();
+        const fullExitGasUsed = fullExitResult.effectiveGasPrice.mul(fullExitResult.cumulativeGasUsed);
+        const fullExitEvent = fullExitResult.events?.find(evt => evt.event === "Exit")
+
+        expect(fullExitEvent).to.not.be.undefined;
+
+        const fullExitToReturn = fullExitEvent?.args?.["toReturn"];
+        const fundMembersAfterFullExit = await fund.getMembers();
+
+        expect(fundMembersAfterFullExit).to.have.lengthOf(0);
+
+        const fundBalanceAfterFullExit = await ethers.provider.getBalance(fund.address);
+
+        expect(fundBalanceAfterFullExit.toNumber()).to.be.equal(0);
+
+        const signerBalanceAfterFullExit = await ethers.provider.getBalance(signer.address);
+        const fullExitCalcResult = signerBalanceAfterPartialExit.sub(fullExitGasUsed).add(fullExitToReturn);
+
+        expect(signerBalanceAfterFullExit.eq(fullExitCalcResult)).to.be.true;
+    });
+
     it("should be able to invite a new member");
 
     it("should be able to kick a member");
