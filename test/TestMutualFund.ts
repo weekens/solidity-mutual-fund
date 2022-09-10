@@ -270,6 +270,8 @@ describe("MutualFund", function () {
 
         await depositFunds(fund, signer.address, ethers.utils.parseEther("1"));
 
+        const signerBalanceAfterDeposit = await ethers.provider.getBalance(signer.address);
+
         // Propose a swap that exceeds the balance, should be reverted.
         await expect(
             fund.submitProposal(
@@ -287,7 +289,7 @@ describe("MutualFund", function () {
             signer.address,
             {
                 proposalType: ProposalType.Swap,
-                amount: ethers.utils.parseEther("1"),
+                amount: ethers.utils.parseEther("0.6"),
                 addresses: [fund.address, asset.address]
             }
         );
@@ -298,13 +300,33 @@ describe("MutualFund", function () {
             swapProposalId
         );
 
-        const endingFundBalance = await ethers.provider.getBalance(fund.address);
+        const fundBalanceAfterSwap = await ethers.provider.getBalance(fund.address);
 
-        expect(endingFundBalance.toNumber()).to.be.equal(0);
+        expect(fundBalanceAfterSwap.eq(ethers.utils.parseEther("0.4"))).to.be.true;
 
-        const endingAssetBalance = await assetTokenContract.balanceOf(asset.address);
+        const assetBalanceAfterSwap = await asset.getTotalBalance();
 
-        expect(endingAssetBalance.gt(0)).to.be.true;
+        expect(assetBalanceAfterSwap.gt(0)).to.be.true;
+
+        // Withdraw 50% of the funds.
+        const partialExitTx = await fund.exit(50);
+        const partialExitResult = await partialExitTx.wait();
+        const partialExitGasUsed = partialExitResult.effectiveGasPrice.mul(partialExitResult.cumulativeGasUsed);
+        const partialExitEvent = partialExitResult.events?.find(evt => evt.event === "Exit")
+
+        expect(partialExitEvent).to.not.be.undefined;
+
+        const fundBalanceAfterPartialExit = await ethers.provider.getBalance(fund.address);
+
+        expect(fundBalanceAfterPartialExit.eq(ethers.utils.parseEther("0.2"))).to.be.true;
+
+        const assetBalanceAfterPartialExit = await asset.getTotalBalance();
+
+        expect(assetBalanceAfterPartialExit.eq(assetBalanceAfterSwap.div(2))).to.be.true;
+
+        const signerBalanceAfterPartialExit = await ethers.provider.getBalance(signer.address);
+
+        expect(signerBalanceAfterPartialExit.gt(signerBalanceAfterDeposit.sub(partialExitGasUsed))).to.be.true;
     });
 
     it("should exit proportionally having multiple assets");
