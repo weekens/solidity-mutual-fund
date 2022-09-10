@@ -270,6 +270,18 @@ describe("MutualFund", function () {
 
         await depositFunds(fund, signer.address, ethers.utils.parseEther("1"));
 
+        // Propose a swap that exceeds the balance, should be reverted.
+        await expect(
+            fund.submitProposal(
+                {
+                    proposalType: ProposalType.Swap,
+                    amount: ethers.utils.parseEther("2"),
+                    addresses: [fund.address, asset.address]
+                },
+                { from: signer.address }
+            )
+        ).to.be.revertedWith("Invalid proposal request: amount exceeds balance");
+
         const swapProposalId = await submitProposal(
             fund,
             signer.address,
