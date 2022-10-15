@@ -4,6 +4,9 @@ pragma experimental ABIEncoderV2;
 
 import "./IAsset.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 
 // Mutual fund contract.
@@ -54,10 +57,12 @@ contract MutualFund {
     Proposal[] private proposals;
     IAsset[] private assets;
     IUniswapV2Router01 private uniswapRouter;
+    IUniswapV2Router02 private uniswapRouter2;
 
     constructor() {
         members.push(Member({ addr: msg.sender, balance: 0 }));
         uniswapRouter = IUniswapV2Router01(0xf164fC0Ec4E93095b804a4795bBe1e041497b92a);
+        uniswapRouter2 = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     }
 
     function getMembers() public view returns (Member[] memory) {
@@ -157,33 +162,69 @@ contract MutualFund {
         }
     }
 
-    function exit(uint8 percent) membersOnly public {
+    function exit(uint8 percent) membersOnly payable public {
         require(percent > 0 && percent <= 100, "Invalid percentage value");
 
         (Member storage member, uint memberIndex) = findMemberByAddress(msg.sender);
         address memberAddress = member.addr;
-        uint balanceToBurn = 0;
+        uint balanceToBurn = 0; // How much member voting tokens to burn.
+        uint toReturn = 0;
 
         if (percent == 100) {
-            balanceToBurn = member.balance;
+            balanceToBurn = member.balance; // Burn all member tokens. Special case to avoid precision errors.
         }
         else {
+            // Burn the given percentage of member tokens (calculate it).
             balanceToBurn = ABDKMath64x64.divu(member.balance, uint256(100)).mulu(percent);
         }
 
-        uint toReturn = ABDKMath64x64.divu(balanceToBurn, totalBalance).mulu(address(this).balance);
-
         if (balanceToBurn > 0) {
+            // The fraction of the burnt tokens from the total token balance.
+            int128 balanceBurnFraction = ABDKMath64x64.divu(balanceToBurn, totalBalance);
+
+            // Swap the given burn fraction from each asset to ETH and send to member's address.
+            for (uint i = 0; i < assets.length; i++) {
+                IAsset asset = assets[i];
+                uint assetTotalBalance = asset.getTotalBalance();
+
+                if (assetTotalBalance > 0) {
+                    uint toReturnFromAsset = balanceBurnFraction.mulu(assetTotalBalance);
+                    address tokenAddress = asset.getTokenAddress();
+                    asset.approve(address(this), toReturnFromAsset);
+                    // Move funds to this contract to be able to make a swap.
+                    IERC20(tokenAddress).transferFrom(address(asset), address(this), toReturnFromAsset);
+                    // Approve the Uniswap Router to spend the funds from this contract's address.
+                    IERC20(tokenAddress).approve(address(uniswapRouter2), toReturnFromAsset);
+
+                    address[] memory path = new address[](2);
+                    path[0] = tokenAddress;
+                    path[1] = uniswapRouter.WETH();
+                    uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                        toReturnFromAsset,
+                        0,
+                        path,
+                        payable(memberAddress),
+                        block.timestamp + 60 * 60
+                    );
+                }
+            }
+
+            // How much ETH to return from the contract's main treasury.
+            toReturn = balanceBurnFraction.mulu(address(this).balance);
+
+            if (toReturn > 0) {
+                // Send ETH from the contract's main treasury to the member's address.
+                payable(memberAddress).transfer(toReturn);
+            }
+
+            // Actually burn the member's voting tokens.
             member.balance -= balanceToBurn;
             totalBalance -= balanceToBurn;
         }
 
+        // Remove the member from the fund if we've got a 100% exit.
         if (percent == 100) {
             removeMember(memberIndex);
-        }
-
-        if (toReturn > 0) {
-            payable(memberAddress).transfer(toReturn);
         }
 
         emit Exit(memberAddress, percent, toReturn);

@@ -322,7 +322,7 @@ describe("MutualFund", function () {
 
         const assetBalanceAfterPartialExit = await asset.getTotalBalance();
 
-        expect(assetBalanceAfterPartialExit.eq(assetBalanceAfterSwap.div(2))).to.be.true;
+        expect(assetBalanceAfterPartialExit.toNumber()).to.be.approximately(assetBalanceAfterSwap.div(2).toNumber(), 1);
 
         const signerBalanceAfterPartialExit = await ethers.provider.getBalance(signer.address);
 

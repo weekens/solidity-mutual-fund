@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 const ERC20ABI = require("@openzeppelin/contracts/build/contracts/ERC20.json");
 
-const UNISWAPV2ROUTER02_ADDRESS = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 const DAI_ADDRESS = "0x6b175474e89094c44da98b954eedeac495271d0f";
 
 describe("UniswapTradeExample", function () {
@@ -23,7 +22,7 @@ describe("UniswapTradeExample", function () {
         // Deploy UniswapTradeExample
         const uniswapTradeExample =
             await ethers.getContractFactory("UniswapTradeExample")
-                .then(contract => contract.deploy(UNISWAPV2ROUTER02_ADDRESS));
+                .then(contract => contract.deploy());
         await uniswapTradeExample.deployed();
 
         // Swap 1 ETH for DAI
@@ -41,5 +40,13 @@ describe("UniswapTradeExample", function () {
         // Assert DAI balance increased
         addr1Dai = await DAI.balanceOf(addr1.address);
         expect(addr1Dai.gt(ethers.BigNumber.from("0"))).to.be.true;
+
+        // Swap back 0.5 of the sum.
+        await DAI.connect(addr1).approve(uniswapTradeExample.address, addr1Dai);
+        await uniswapTradeExample.connect(addr1).swapBack(
+            DAI_ADDRESS,
+            ethers.utils.parseEther("1").div(2),
+            addr1.address
+        );
     });
 });

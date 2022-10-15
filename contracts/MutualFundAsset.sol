@@ -17,7 +17,11 @@ contract MutualFundAsset is IAsset {
         return tokenAddress;
     }
 
-    function getTotalBalance() public view returns (uint) {
+    function getTotalBalance() external override(IAsset) view returns (uint) {
         return IERC20(tokenAddress).balanceOf(address(this));
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        return IERC20(tokenAddress).approve(spender, amount);
     }
 }
