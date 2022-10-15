@@ -329,21 +329,33 @@ contract MutualFund {
     function checkCanExecuteProposal(address memberAddress, Proposal storage proposal) private view {
         require(proposal.author == memberAddress, "Executor is not a proposal author");
 
-        int score = 0;
+        uint supportBalance = 0;
+        uint noSupportBalance = 0;
         uint votesLength = proposal.votes.length;
+        uint membersLength = members.length;
 
-        require(votesLength == members.length, "Voting is in progress");
+        require(votesLength == membersLength, "Voting is in progress");
 
         for (uint i = 0; i < votesLength; i++) {
             Vote storage v = proposal.votes[i];
+            (Member storage member,) = findMemberByAddress(v.memberAddress);
+
             if (v.support) {
-                score++;
+                supportBalance += member.balance;
             }
             else {
-                score--;
+                noSupportBalance += member.balance;
             }
         }
-        require(score >= 0, "Proposal was rejected by voting");
+
+        if (membersLength == 1) {
+            // Allow zero votes or vote ties when we have only one member.
+            // This is to save on gas when we need to do initial housekeeping.
+            require(supportBalance >= noSupportBalance, "Proposal was rejected by voting");
+        }
+        else {
+            require(supportBalance > noSupportBalance, "Proposal was rejected by voting");
+        }
     }
 
     function checkMemberCanVote(address memberAddress, Proposal storage proposal) private view {

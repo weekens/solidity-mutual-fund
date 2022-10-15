@@ -230,6 +230,8 @@ describe("MutualFund", function () {
         const fund = await MutualFund.deploy();
         const [founder, member1] = await ethers.getSigners();
 
+        await depositFunds(fund, founder.address, 10000);
+
         const memberProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.AddMember,
             amount: 0,
@@ -396,6 +398,14 @@ describe("MutualFund", function () {
     it("should exit proportionally having multiple assets");
 
     it("should take the size of the shares into account during voting");
+
+    it("should prohibit executing a proposal more than once");
+
+    // https://ethereum.stackexchange.com/questions/86633/time-dependent-tests-with-hardhat
+    it("should allow partial voting");
+
+    // https://ethereum.stackexchange.com/questions/86633/time-dependent-tests-with-hardhat
+    it("should prohibit executing an expired proposal");
 });
 
 async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish) {
