@@ -92,6 +92,7 @@ contract MutualFund {
         newProposal.id = newProposalId;
         newProposal.author = msg.sender;
         newProposal.request = proposalRequest;
+        newProposal.votes.push(Vote({ memberAddress: msg.sender, support: true }));
 
         emit NewProposal(newProposalId, msg.sender);
 
