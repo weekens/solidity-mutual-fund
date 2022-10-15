@@ -172,9 +172,7 @@ contract MutualFund {
         for (uint i = 0; i < addressesLength; i++) {
             address addr = request.addresses[i];
 
-            if (hasMemberWithAddress(addr)) {
-                revert("Member already exists.");
-            }
+            require(!hasMemberWithAddress(addr), "Member already exists");
 
             members.push(Member({ addr: addr, balance: 0 }));
         }
@@ -273,9 +271,7 @@ contract MutualFund {
             for (uint i = 0; i < request.addresses.length; i++) {
                 address addr = request.addresses[i];
 
-                if (hasMemberWithAddress(addr)) {
-                    revert("Member already exists.");
-                }
+                require(!hasMemberWithAddress(addr), "Member already exists");
             }
         }
     }
@@ -334,7 +330,11 @@ contract MutualFund {
         require(proposal.author == memberAddress, "Executor is not a proposal author");
 
         int score = 0;
-        for (uint i = 0; i < proposal.votes.length; i++) {
+        uint votesLength = proposal.votes.length;
+
+        require(votesLength == members.length, "Voting is in progress");
+
+        for (uint i = 0; i < votesLength; i++) {
             Vote storage v = proposal.votes[i];
             if (v.support) {
                 score++;
