@@ -262,24 +262,32 @@ describe("MutualFund", function () {
         );
         await voteForProposal(fund, member1.address, depositProposalId);
         await expect(
-            fund.executeProposal(
+            fund.connect(await ethers.getSigner(member1.address)).executeProposal(
                 depositProposalId,
                 {
-                    from: member1.address,
                     value: 1000
                 }
             )
         ).to.be.revertedWith("Voting is in progress");
         await voteForProposal(fund, founder.address, depositProposalId);
-        await fund.executeProposal(
+        await fund.connect(await ethers.getSigner(member1.address)).executeProposal(
             depositProposalId,
             {
-                from: member1.address,
                 value: 1000
             }
         );
         const endingMemberBalance = (await fund.getMember(member1.address)).balance;
         expect(endingMemberBalance.toNumber()).to.be.equal(1000);
+
+        await expect(
+            fund.submitProposal(
+                {
+                    proposalType: ProposalType.AddMember,
+                    amount: 0,
+                    addresses: [member1.address]
+                }
+            )
+        ).to.be.revertedWith("Member already exists");
     });
 
     it("should be able to kick a member");
@@ -416,9 +424,8 @@ async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish
 }
 
 async function submitProposal(fund: MutualFund, from: string, proposal: MutualFund.ProposalRequestStruct): Promise<BigNumber> {
-    const submitProposalTx = await fund.submitProposal(
-        proposal,
-        { from }
+    const submitProposalTx = await fund.connect(await ethers.getSigner(from)).submitProposal(
+        proposal
     );
     const submitProposalResult = await submitProposalTx.wait();
 
@@ -434,10 +441,9 @@ async function submitProposal(fund: MutualFund, from: string, proposal: MutualFu
 }
 
 async function voteForProposal(fund: MutualFund, from: string, proposalId: BigNumberish) {
-    const voteResultPromise = fund.vote(
+    const voteResultPromise = fund.connect(await ethers.getSigner(from)).vote(
         proposalId,
-        true,
-        { from }
+        true
     );
 
     await expect(voteResultPromise)
@@ -446,9 +452,9 @@ async function voteForProposal(fund: MutualFund, from: string, proposalId: BigNu
 }
 
 async function executeProposal(fund: MutualFund, from: string, proposalId: BigNumberish, value?: BigNumberish) {
-    const executeResultPromise = fund.executeProposal(
+    const executeResultPromise = fund.connect(await ethers.getSigner(from)).executeProposal(
         proposalId,
-        { from, value }
+        { value }
     );
 
     await expect(executeResultPromise)

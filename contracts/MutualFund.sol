@@ -130,6 +130,9 @@ contract MutualFund {
         else if (proposal.request.proposalType == ProposalType.Swap) {
             executeSwapProposal(proposal.request);
         }
+        else if (proposal.request.proposalType == ProposalType.AddMember) {
+            executeAddMemberProposal(proposal.request);
+        }
         else {
             revert("Unknown proposal type");
         }
@@ -160,6 +163,20 @@ contract MutualFund {
         }
         else {
             revert("Not implemented yet.");
+        }
+    }
+
+    function executeAddMemberProposal(ProposalRequest storage request) private {
+        uint addressesLength = request.addresses.length;
+
+        for (uint i = 0; i < addressesLength; i++) {
+            address addr = request.addresses[i];
+
+            if (hasMemberWithAddress(addr)) {
+                revert("Member already exists.");
+            }
+
+            members.push(Member({ addr: addr, balance: 0 }));
         }
     }
 
@@ -252,10 +269,21 @@ contract MutualFund {
                 "Invalid proposal request: first and second address should not be equal"
             );
         }
+        else if (request.proposalType == ProposalType.AddMember) {
+            for (uint i = 0; i < request.addresses.length; i++) {
+                address addr = request.addresses[i];
+
+                if (hasMemberWithAddress(addr)) {
+                    revert("Member already exists.");
+                }
+            }
+        }
     }
 
     function hasMemberWithAddress(address addr) private view returns (bool) {
-        for (uint i = 0; i < members.length; i++) {
+        uint membersLength = members.length;
+
+        for (uint i = 0; i < membersLength; i++) {
             if (members[i].addr == addr) return true;
         }
 
