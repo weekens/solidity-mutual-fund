@@ -8,7 +8,8 @@ enum ProposalType {
     DepositFunds,
     AddAsset,
     Swap,
-    AddMember
+    AddMember,
+    KickMember
 }
 
 describe("MutualFund", function () {
@@ -41,12 +42,6 @@ describe("MutualFund", function () {
                 amount: 20,
                 addresses: []
             }
-        );
-
-        await voteForProposal(
-            fund,
-            signer.address,
-            proposalId
         );
 
         // Try to send wrong sum.
@@ -238,7 +233,6 @@ describe("MutualFund", function () {
             addresses: [member1.address]
         });
 
-        await voteForProposal(fund, founder.address, memberProposalId);
         await executeProposal(fund, founder.address, memberProposalId);
 
         // member1 should now be a member.
@@ -262,7 +256,6 @@ describe("MutualFund", function () {
                 addresses: []
             }
         );
-        await voteForProposal(fund, member1.address, depositProposalId);
         await expect(
             fund.connect(await ethers.getSigner(member1.address)).executeProposal(
                 depositProposalId,
@@ -290,6 +283,24 @@ describe("MutualFund", function () {
                 }
             )
         ).to.be.revertedWith("Member already exists");
+
+        // Now we kick member1.
+
+        const kickProposalId = await submitProposal(fund, founder.address, {
+            proposalType: ProposalType.KickMember,
+            amount: 0,
+            addresses: [member1.address]
+        });
+        await voteAgainstProposal(fund, member1.address, kickProposalId);
+
+        const memberOwnBalanceBeforeKick = await ethers.provider.getBalance(member1.address);
+
+        await executeProposal(fund, founder.address, kickProposalId);
+
+        const memberOwnBalanceAfterKick = await ethers.provider.getBalance(member1.address);
+
+        // We should return funds to kicked member.
+        expect(memberOwnBalanceAfterKick.eq(memberOwnBalanceBeforeKick.add(1000))).to.be.true;
     });
 
     it("should be able to kick a member");
@@ -321,7 +332,6 @@ describe("MutualFund", function () {
                 addresses: [asset.address]
             }
         );
-        await voteForProposal(fund, signer.address, assetProposalId);
 
         await executeProposal(
             fund,
@@ -359,7 +369,6 @@ describe("MutualFund", function () {
                 addresses: [fund.address, asset.address]
             }
         );
-        await voteForProposal(fund, signer.address, swapProposalId);
         await executeProposal(
             fund,
             signer.address,
@@ -419,12 +428,6 @@ async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish
         }
     );
 
-    await voteForProposal(
-        fund,
-        from,
-        proposalId
-    );
-
     await executeProposal(
         fund,
         from,
@@ -459,6 +462,17 @@ async function voteForProposal(fund: MutualFund, from: string, proposalId: BigNu
     await expect(voteResultPromise)
         .to.emit(fund, "NewVote")
         .withArgs(proposalId, from, true);
+}
+
+async function voteAgainstProposal(fund: MutualFund, from: string, proposalId: BigNumberish) {
+    const voteResultPromise = fund.connect(await ethers.getSigner(from)).vote(
+        proposalId,
+        false
+    );
+
+    await expect(voteResultPromise)
+        .to.emit(fund, "NewVote")
+        .withArgs(proposalId, from, false);
 }
 
 async function executeProposal(fund: MutualFund, from: string, proposalId: BigNumberish, value?: BigNumberish) {
