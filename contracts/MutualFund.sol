@@ -22,7 +22,8 @@ contract MutualFund {
     enum ProposalType {
         DepositFunds,
         AddAsset,
-        Swap
+        Swap,
+        AddMember
     }
 
     struct ProposalRequest {

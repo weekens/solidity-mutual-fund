@@ -7,7 +7,8 @@ const ERC20 = require("@openzeppelin/contracts/build/contracts/ERC20.json");
 enum ProposalType {
     DepositFunds,
     AddAsset,
-    Swap
+    Swap,
+    AddMember
 }
 
 describe("MutualFund", function () {
@@ -224,7 +225,62 @@ describe("MutualFund", function () {
         expect(signerBalanceAfterFullExit.eq(fullExitCalcResult)).to.be.true;
     });
 
-    it("should be able to invite a new member");
+    it("should be able to invite a new member", async () => {
+        const MutualFund = await ethers.getContractFactory("MutualFund");
+        const fund = await MutualFund.deploy();
+        const [founder, member1] = await ethers.getSigners();
+
+        const memberProposalId = await submitProposal(fund, founder.address, {
+            proposalType: ProposalType.AddMember,
+            amount: 0,
+            addresses: [member1.address]
+        });
+
+        await voteForProposal(fund, founder.address, memberProposalId);
+        await executeProposal(fund, founder.address, memberProposalId);
+
+        // member1 should now be a member.
+
+        const members = await fund.getMembers();
+
+        expect(members).to.have.lengthOf(2);
+
+        const member1Record = members.find(elem => elem.addr === member1.address);
+
+        expect(member1Record).to.not.be.null;
+
+        // member1 should now be able to deposit funds.
+
+        const depositProposalId = await submitProposal(
+            fund,
+            member1.address,
+            {
+                proposalType: ProposalType.DepositFunds,
+                amount: 1000,
+                addresses: []
+            }
+        );
+        await voteForProposal(fund, member1.address, depositProposalId);
+        await expect(
+            fund.executeProposal(
+                depositProposalId,
+                {
+                    from: member1.address,
+                    value: 1000
+                }
+            )
+        ).to.be.revertedWith("Voting is in progress");
+        await voteForProposal(fund, founder.address, depositProposalId);
+        await fund.executeProposal(
+            depositProposalId,
+            {
+                from: member1.address,
+                value: 1000
+            }
+        );
+        const endingMemberBalance = (await fund.getMember(member1.address)).balance;
+        expect(endingMemberBalance.toNumber()).to.be.equal(1000);
+    });
 
     it("should be able to kick a member");
 
