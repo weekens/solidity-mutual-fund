@@ -23,7 +23,8 @@ contract MutualFund {
         DepositFunds,
         AddAsset,
         Swap,
-        AddMember
+        AddMember,
+        KickMember
     }
 
     struct ProposalRequest {
@@ -134,6 +135,9 @@ contract MutualFund {
         else if (proposal.request.proposalType == ProposalType.AddMember) {
             executeAddMemberProposal(proposal.request);
         }
+        else if (proposal.request.proposalType == ProposalType.KickMember) {
+            executeKickMemberProposal(proposal.request);
+        }
         else {
             revert("Unknown proposal type");
         }
@@ -179,11 +183,22 @@ contract MutualFund {
         }
     }
 
-    function exit(uint8 percent) membersOnly payable public {
+    function executeKickMemberProposal(ProposalRequest storage request) private {
+        uint addressesLength = request.addresses.length;
+
+        for (uint i = 0; i < addressesLength; i++) {
+            exitInternal(request.addresses[i], 100);
+        }
+    }
+
+    function exit(uint8 percent) membersOnly public {
         require(percent > 0 && percent <= 100, "Invalid percentage value");
 
-        (Member storage member, uint memberIndex) = findMemberByAddress(msg.sender);
-        address memberAddress = member.addr;
+        exitInternal(msg.sender, percent);
+    }
+
+    function exitInternal(address memberAddress, uint8 percent) private {
+        (Member storage member, uint memberIndex) = findMemberByAddress(memberAddress);
         uint balanceToBurn = 0; // How much member voting tokens to burn.
         uint toReturn = 0;
 
@@ -196,20 +211,16 @@ contract MutualFund {
         }
 
         if (balanceToBurn > 0) {
-            // The fraction of the burnt tokens from the total token balance.
-            int128 balanceBurnFraction = ABDKMath64x64.divu(balanceToBurn, totalBalance);
-
             // Swap the given burn fraction from each asset to ETH and send to member's address.
             for (uint i = 0; i < assets.length; i++) {
-                IAsset asset = assets[i];
-                uint assetTotalBalance = asset.getTotalBalance();
+                uint assetTotalBalance = assets[i].getTotalBalance();
 
                 if (assetTotalBalance > 0) {
-                    uint toReturnFromAsset = balanceBurnFraction.mulu(assetTotalBalance);
-                    address tokenAddress = asset.getTokenAddress();
-                    asset.approve(address(this), toReturnFromAsset);
+                    uint toReturnFromAsset = ABDKMath64x64.divu(balanceToBurn, totalBalance).mulu(assetTotalBalance);
+                    address tokenAddress = assets[i].getTokenAddress();
+                    assets[i].approve(address(this), toReturnFromAsset);
                     // Move funds to this contract to be able to make a swap.
-                    IERC20(tokenAddress).transferFrom(address(asset), address(this), toReturnFromAsset);
+                    IERC20(tokenAddress).transferFrom(address(assets[i]), address(this), toReturnFromAsset);
                     // Approve the Uniswap Router to spend the funds from this contract's address.
                     IERC20(tokenAddress).approve(address(uniswapRouter2), toReturnFromAsset);
 
@@ -227,7 +238,7 @@ contract MutualFund {
             }
 
             // How much ETH to return from the contract's main treasury.
-            toReturn = balanceBurnFraction.mulu(address(this).balance);
+            toReturn = ABDKMath64x64.divu(balanceToBurn, totalBalance).mulu(address(this).balance);
 
             if (toReturn > 0) {
                 // Send ETH from the contract's main treasury to the member's address.
@@ -273,6 +284,13 @@ contract MutualFund {
                 address addr = request.addresses[i];
 
                 require(!hasMemberWithAddress(addr), "Member already exists");
+            }
+        }
+        else if (request.proposalType == ProposalType.KickMember) {
+            for (uint i = 0; i < request.addresses.length; i++) {
+                address addr = request.addresses[i];
+
+                require(hasMemberWithAddress(addr), "Member does not exist");
             }
         }
     }
