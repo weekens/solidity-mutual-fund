@@ -300,10 +300,8 @@ describe("MutualFund", function () {
         const memberOwnBalanceAfterKick = await ethers.provider.getBalance(member1.address);
 
         // We should return funds to kicked member.
-        expect(memberOwnBalanceAfterKick.eq(memberOwnBalanceBeforeKick.add(1000))).to.be.true;
+        expect(memberOwnBalanceAfterKick.sub(memberOwnBalanceBeforeKick.add(1000))).to.be.approximately(0, 1);
     });
-
-    it("should be able to kick a member");
 
     it("should be able to add asset and make a swap", async () => {
         const assetTokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC

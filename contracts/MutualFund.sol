@@ -119,7 +119,7 @@ contract MutualFund {
             require(proposal.request.amount == msg.value, "The sent funds amount differs from proposed");
             (Member storage member,) = findMemberByAddress(proposal.author);
             member.balance += msg.value;
-            totalBalance = msg.value;
+            totalBalance += msg.value;
         }
         else if (proposal.request.proposalType == ProposalType.AddAsset) {
             IAsset asset = IAsset(proposal.request.addresses[0]);
