@@ -409,10 +409,89 @@ describe("MutualFund", function () {
     it("should prohibit executing a proposal more than once");
 
     // https://ethereum.stackexchange.com/questions/86633/time-dependent-tests-with-hardhat
-    it("should allow partial voting");
+    it("should allow partial voting", async () => {
+        const MutualFund = await ethers.getContractFactory("MutualFund");
+        const fund = await MutualFund.deploy({
+            votingPeriod: 2 * 60 * 60,
+            gracePeriod: 60 * 60
+        });
+        const [founder, member1, member2] = await ethers.getSigners();
+
+        await depositFunds(fund, founder.address, 10000);
+
+        // Add new member.
+        const memberProposalId = await submitProposal(fund, founder.address, {
+            proposalType: ProposalType.AddMember,
+            amount: 0,
+            addresses: [member1.address]
+        });
+        await executeProposal(fund, founder.address, memberProposalId);
+
+        // member1 should now be able to deposit funds.
+
+        const depositProposalId = await submitProposal(
+            fund,
+            member1.address,
+            {
+                proposalType: ProposalType.DepositFunds,
+                amount: 1000,
+                addresses: []
+            }
+        );
+        await voteForProposal(fund, founder.address, depositProposalId);
+        await fund.connect(await ethers.getSigner(member1.address)).executeProposal(
+            depositProposalId,
+            {
+                value: 1000
+            }
+        );
+
+        // Now we submit another member proposal.
+        const member2ProposalId = await submitProposal(
+            fund,
+            member1.address,
+            {
+                proposalType: ProposalType.AddMember,
+                amount: 0,
+                addresses: [member2.address]
+            }
+        );
+
+        // Try to execute proposal; should fail because the voting has not finished yet.
+        await expect(
+            fund.connect(await ethers.getSigner(member1.address)).executeProposal(
+                member2ProposalId,
+                { value: 0 }
+            ))
+            .to.be.revertedWith("Voting is in progress");
+
+        // Wait for voting period to pass.
+        await ethers.provider.send("evm_increaseTime", [2 * 60 * 60 + 10 * 60]);
+        await ethers.provider.send("evm_mine", []);
+
+        // Try to execute proposal; should fail because not everyone has voted, and the grace period has not passed.
+        await expect(
+            fund.connect(await ethers.getSigner(member1.address)).executeProposal(
+                member2ProposalId,
+                { value: 0 }
+            ))
+            .to.be.revertedWith("Grace period is in progress");
+
+        // Wait for grace period to pass.
+        await ethers.provider.send("evm_increaseTime", [60 * 60]);
+        await ethers.provider.send("evm_mine", []);
+
+        // Now the proposal should be successfully executed.
+        await executeProposal(fund, member1.address, member2ProposalId);
+        const members = await fund.getMembers();
+        expect(members).to.have.lengthOf(3);
+    });
 
     // https://ethereum.stackexchange.com/questions/86633/time-dependent-tests-with-hardhat
     it("should prohibit executing an expired proposal");
+
+    // https://ethereum.stackexchange.com/questions/86633/time-dependent-tests-with-hardhat
+    it("should allow a grace period if there were negative votes");
 });
 
 async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish) {
