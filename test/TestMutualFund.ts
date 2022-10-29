@@ -602,7 +602,26 @@ describe("MutualFund", function () {
         ).to.be.revertedWith("Voting period has passed");
     });
 
-    it("should prohibit setting invalid voting or grace period");
+    it("should prohibit setting invalid voting or grace period", async () => {
+        const MutualFund = await ethers.getContractFactory("MutualFund");
+        const fund = await MutualFund.deploy(defaultFundConfig());
+        const [founder] = await ethers.getSigners();
+
+        await expect(
+            fund.connect(await ethers.getSigner(founder.address)).submitProposal({
+                proposalType: ProposalType.ChangeVotingPeriod,
+                amount: ethers.constants.MaxUint256,
+                addresses: []
+            })
+        ).to.be.revertedWithPanic(0x11);
+        await expect(
+            fund.connect(await ethers.getSigner(founder.address)).submitProposal({
+                proposalType: ProposalType.ChangeGracePeriod,
+                amount: ethers.constants.MaxUint256,
+                addresses: []
+            })
+        ).to.be.revertedWithPanic(0x11);
+    });
 });
 
 async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish) {
