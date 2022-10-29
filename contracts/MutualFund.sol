@@ -362,8 +362,6 @@ contract MutualFund {
         uint votesLength = proposal.votes.length;
         uint membersLength = members.length;
 
-        require(votesLength == membersLength, "Voting is in progress");
-
         for (uint i = 0; i < votesLength; i++) {
             Vote storage v = proposal.votes[i];
             (Member storage member,) = findMemberByAddress(v.memberAddress);
@@ -382,6 +380,21 @@ contract MutualFund {
             require(supportBalance >= noSupportBalance, "Proposal was rejected by voting");
         }
         else {
+            if (votesLength == membersLength) {
+                if (noSupportBalance > 0) {
+                    require(
+                        block.timestamp > proposal.createdAt + configuration.votingPeriod + configuration.gracePeriod,
+                        "Grace period is in progress"
+                    );
+                }
+            }
+            else {
+                require(
+                    block.timestamp > proposal.createdAt + configuration.votingPeriod + configuration.gracePeriod,
+                    "Voting or grace period is in progress"
+                );
+            }
+
             require(supportBalance > noSupportBalance, "Proposal was rejected by voting");
         }
     }
