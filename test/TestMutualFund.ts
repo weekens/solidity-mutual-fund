@@ -16,7 +16,7 @@ describe("MutualFund", function () {
 
     it("should add sender to members upon creation", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
-        const fund = await MutualFund.deploy();
+        const fund = await MutualFund.deploy(defaultFundConfig());
 
         const members = await fund.getMembers();
 
@@ -31,7 +31,7 @@ describe("MutualFund", function () {
 
     it("should be able to deposit funds with proposal", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
-        const fund = await MutualFund.deploy();
+        const fund = await MutualFund.deploy(defaultFundConfig());
         const [signer] = await ethers.getSigners();
 
         const proposalId = await submitProposal(
@@ -83,7 +83,7 @@ describe("MutualFund", function () {
 
     it("should be able to exit with funds", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
-        const fund = await MutualFund.deploy();
+        const fund = await MutualFund.deploy(defaultFundConfig());
         const [signer] = await ethers.getSigners();
 
         await depositFunds(fund, signer.address, 1000);
@@ -154,7 +154,7 @@ describe("MutualFund", function () {
 
     it("should be able to exit with funds (big sums)", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
-        const fund = await MutualFund.deploy();
+        const fund = await MutualFund.deploy(defaultFundConfig());
         const [signer] = await ethers.getSigners();
 
         const depositAmount = ethers.utils.parseEther("100");
@@ -222,7 +222,7 @@ describe("MutualFund", function () {
 
     it("should be able to invite a new member", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
-        const fund = await MutualFund.deploy();
+        const fund = await MutualFund.deploy(defaultFundConfig());
         const [founder, member1] = await ethers.getSigners();
 
         await depositFunds(fund, founder.address, 10000);
@@ -309,7 +309,7 @@ describe("MutualFund", function () {
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const MutualFundAsset = await ethers.getContractFactory("MutualFundAsset");
         const asset = await MutualFundAsset.deploy(assetTokenAddress);
-        const fund = await MutualFund.deploy();
+        const fund = await MutualFund.deploy(defaultFundConfig());
 
         const initialAssetBalance = await assetTokenContract.balanceOf(asset.address);
 
@@ -511,6 +511,13 @@ async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish
         proposalId,
         amount
     );
+}
+
+function defaultFundConfig(): MutualFund.ConfigurationStruct {
+    return {
+        votingPeriod: 2 * 60 * 60,
+        gracePeriod: 60 * 60
+    };
 }
 
 async function submitProposal(fund: MutualFund, from: string, proposal: MutualFund.ProposalRequestStruct): Promise<BigNumber> {
