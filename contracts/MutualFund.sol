@@ -45,6 +45,7 @@ contract MutualFund {
 
     struct Proposal {
         uint id;
+        uint createdAt;
         address author;
         ProposalRequest request;
         Vote[] votes;
@@ -98,6 +99,7 @@ contract MutualFund {
         Proposal storage newProposal = proposals.push(); // Allocate a new proposal.
         uint newProposalId = proposalIdCounter++;
         newProposal.id = newProposalId;
+        newProposal.createdAt = block.timestamp;
         newProposal.author = msg.sender;
         newProposal.request = proposalRequest;
         newProposal.votes.push(Vote({ memberAddress: msg.sender, support: true }));
@@ -385,6 +387,8 @@ contract MutualFund {
     }
 
     function checkMemberCanVote(address memberAddress, Proposal storage proposal) private view {
+        require(block.timestamp - proposal.createdAt < configuration.votingPeriod, "Voting period has passed");
+
         for (uint i = 0; i < proposal.votes.length; i++) {
             require(proposal.votes[i].memberAddress != memberAddress, "Member already voted");
         }

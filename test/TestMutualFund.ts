@@ -492,6 +492,8 @@ describe("MutualFund", function () {
 
     // https://ethereum.stackexchange.com/questions/86633/time-dependent-tests-with-hardhat
     it("should allow a grace period if there were negative votes");
+
+    it("should prohibit voting after voting period");
 });
 
 async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish) {
