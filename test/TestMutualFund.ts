@@ -263,7 +263,7 @@ describe("MutualFund", function () {
                     value: 1000
                 }
             )
-        ).to.be.revertedWith("Voting is in progress");
+        ).to.be.revertedWith("Voting or grace period is in progress");
         await voteForProposal(fund, founder.address, depositProposalId);
         await fund.connect(await ethers.getSigner(member1.address)).executeProposal(
             depositProposalId,
@@ -292,6 +292,14 @@ describe("MutualFund", function () {
             addresses: [member1.address]
         });
         await voteAgainstProposal(fund, member1.address, kickProposalId);
+
+        await expect(
+            fund.connect(await ethers.getSigner(founder.address)).executeProposal(kickProposalId)
+        ).to.be.revertedWith("Grace period is in progress");
+
+        // Wait for voting and grace period to pass.
+        await ethers.provider.send("evm_increaseTime", [3 * 60 * 60 + 10 * 60]);
+        await ethers.provider.send("evm_mine", []);
 
         const memberOwnBalanceBeforeKick = await ethers.provider.getBalance(member1.address);
 
@@ -408,7 +416,6 @@ describe("MutualFund", function () {
 
     it("should prohibit executing a proposal more than once");
 
-    // https://ethereum.stackexchange.com/questions/86633/time-dependent-tests-with-hardhat
     it("should allow partial voting", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const fund = await MutualFund.deploy({
@@ -463,7 +470,7 @@ describe("MutualFund", function () {
                 member2ProposalId,
                 { value: 0 }
             ))
-            .to.be.revertedWith("Voting is in progress");
+            .to.be.revertedWith("Voting or grace period is in progress");
 
         // Wait for voting period to pass.
         await ethers.provider.send("evm_increaseTime", [2 * 60 * 60 + 10 * 60]);
@@ -475,7 +482,7 @@ describe("MutualFund", function () {
                 member2ProposalId,
                 { value: 0 }
             ))
-            .to.be.revertedWith("Grace period is in progress");
+            .to.be.revertedWith("Voting or grace period is in progress");
 
         // Wait for grace period to pass.
         await ethers.provider.send("evm_increaseTime", [60 * 60]);
@@ -487,10 +494,8 @@ describe("MutualFund", function () {
         expect(members).to.have.lengthOf(3);
     });
 
-    // https://ethereum.stackexchange.com/questions/86633/time-dependent-tests-with-hardhat
     it("should prohibit executing an expired proposal");
 
-    // https://ethereum.stackexchange.com/questions/86633/time-dependent-tests-with-hardhat
     it("should allow a grace period if there were negative votes");
 
     it("should prohibit voting after voting period");
