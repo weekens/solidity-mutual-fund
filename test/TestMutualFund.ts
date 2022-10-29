@@ -505,22 +505,16 @@ describe("MutualFund", function () {
     it("should allow changing voting period and grace period", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const fund = await MutualFund.deploy(defaultFundConfig());
-        const [founder, member1] = await ethers.getSigners();
+        const [founder, member1, member2] = await ethers.getSigners();
 
         await depositFunds(fund, founder.address, 10000);
 
-        // Change the timings.
-        const votingPeriodProposalId = await submitProposal(fund, founder.address, {
-            proposalType: ProposalType.ChangeVotingPeriod,
-            amount: 0,
-            addresses: []
-        });
+        // Change the grace period.
         const gracePeriodProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.ChangeGracePeriod,
             amount: 0,
             addresses: []
         });
-        await executeProposal(fund, founder.address, votingPeriodProposalId);
         await executeProposal(fund, founder.address, gracePeriodProposalId);
 
         // Add new member.
@@ -531,7 +525,7 @@ describe("MutualFund", function () {
         });
         await executeProposal(fund, founder.address, memberProposalId);
 
-        // A new member should be able to deposit funds without approval, because both periods are zero.
+        // Deposit funds for new member.
         const depositProposalId = await submitProposal(
             fund,
             member1.address,
@@ -541,15 +535,19 @@ describe("MutualFund", function () {
                 addresses: []
             }
         );
+        await voteForProposal(fund, founder.address, depositProposalId);
         await executeProposal(fund, member1.address, depositProposalId, 1000);
 
         // Submit and execute new grace period change proposal.
-        // It should be successfully executed, because the current periods are zero.
+        // It should be successfully executed even if rejected, because the current grace period is zero.
         const gracePeriod2ProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.ChangeGracePeriod,
             amount: 10 * 60,
             addresses: []
         });
+        await voteAgainstProposal(fund, member1.address, gracePeriod2ProposalId);
+        // Wait for voting period to pass. There should be no grace period.
+        await waitSeconds(2 * 60 * 60 + 10);
         await executeProposal(fund, founder.address, gracePeriod2ProposalId);
 
         // Now try to kick a member.
@@ -564,13 +562,47 @@ describe("MutualFund", function () {
             fund.connect(await ethers.getSigner(founder.address)).executeProposal(kickProposalId)
         ).to.be.revertedWith("Grace period is in progress");
 
-        // Wait for period to pass.
-        await ethers.provider.send("evm_increaseTime", [11 * 60]);
-        await ethers.provider.send("evm_mine", []);
+        // Wait for voting and grace period to pass.
+        await waitSeconds(2 * 60 * 60 + 11 * 60);
 
         // The proposal should be now successfully executed.
         await executeProposal(fund, founder.address, kickProposalId);
+
+        // Set the voting period to 0.
+        const votingPeriodProposalId = await submitProposal(fund, founder.address, {
+            proposalType: ProposalType.ChangeVotingPeriod,
+            amount: 0,
+            addresses: []
+        });
+        await executeProposal(fund, founder.address, votingPeriodProposalId);
+
+        // Add new member.
+        const member2ProposalId = await submitProposal(fund, founder.address, {
+            proposalType: ProposalType.AddMember,
+            amount: 0,
+            addresses: [member2.address]
+        });
+        await executeProposal(fund, founder.address, member2ProposalId);
+
+        // Deposit funds for new member.
+        const deposit2ProposalId = await submitProposal(
+            fund,
+            member2.address,
+            {
+                proposalType: ProposalType.DepositFunds,
+                amount: 2000,
+                addresses: []
+            }
+        );
+        await expect(
+            fund.connect(await ethers.getSigner(founder.address)).vote(
+                deposit2ProposalId,
+                false
+            )
+        ).to.be.revertedWith("Voting period has passed");
     });
+
+    it("should prohibit setting invalid voting or grace period");
 });
 
 async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish) {
@@ -597,6 +629,11 @@ function defaultFundConfig(): MutualFund.ConfigurationStruct {
         votingPeriod: 2 * 60 * 60,
         gracePeriod: 60 * 60
     };
+}
+
+async function waitSeconds(seconds: number) {
+    await ethers.provider.send("evm_increaseTime", [seconds]);
+    await ethers.provider.send("evm_mine", []);
 }
 
 async function submitProposal(fund: MutualFund, from: string, proposal: MutualFund.ProposalRequestStruct): Promise<BigNumber> {

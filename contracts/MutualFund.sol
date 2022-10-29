@@ -29,7 +29,9 @@ contract MutualFund {
         AddAsset,
         Swap,
         AddMember,
-        KickMember
+        KickMember,
+        ChangeVotingPeriod,
+        ChangeGracePeriod
     }
 
     struct ProposalRequest {
@@ -123,14 +125,15 @@ contract MutualFund {
     function executeProposal(uint proposalId) membersOnly payable public {
         (Proposal storage proposal,) = findProposalById(proposalId);
         checkCanExecuteProposal(msg.sender, proposal);
+        ProposalType proposalType = proposal.request.proposalType;
 
-        if (proposal.request.proposalType == ProposalType.DepositFunds) {
+        if (proposalType == ProposalType.DepositFunds) {
             require(proposal.request.amount == msg.value, "The sent funds amount differs from proposed");
             (Member storage member,) = findMemberByAddress(proposal.author);
             member.balance += msg.value;
             totalBalance += msg.value;
         }
-        else if (proposal.request.proposalType == ProposalType.AddAsset) {
+        else if (proposalType == ProposalType.AddAsset) {
             IAsset asset = IAsset(proposal.request.addresses[0]);
 
             // Check that this is a valid asset address.
@@ -138,14 +141,20 @@ contract MutualFund {
 
             assets.push(asset);
         }
-        else if (proposal.request.proposalType == ProposalType.Swap) {
+        else if (proposalType == ProposalType.Swap) {
             executeSwapProposal(proposal.request);
         }
-        else if (proposal.request.proposalType == ProposalType.AddMember) {
+        else if (proposalType == ProposalType.AddMember) {
             executeAddMemberProposal(proposal.request);
         }
-        else if (proposal.request.proposalType == ProposalType.KickMember) {
+        else if (proposalType == ProposalType.KickMember) {
             executeKickMemberProposal(proposal.request);
+        }
+        else if (proposalType == ProposalType.ChangeVotingPeriod) {
+            configuration.votingPeriod = uint64(proposal.request.amount);
+        }
+        else if (proposalType == ProposalType.ChangeGracePeriod) {
+            configuration.gracePeriod = uint64(proposal.request.amount);
         }
         else {
             revert("Unknown proposal type");
@@ -268,14 +277,16 @@ contract MutualFund {
     }
 
     function validateProposalRequest(ProposalRequest memory request) private view {
-        if (request.proposalType == ProposalType.DepositFunds) {
+        ProposalType proposalType = request.proposalType;
+
+        if (proposalType == ProposalType.DepositFunds) {
             require(request.amount > 0, "Invalid proposal request: amount should be positive");
         }
-        else if (request.proposalType == ProposalType.AddAsset) {
+        else if (proposalType == ProposalType.AddAsset) {
             require(request.addresses.length == 1, "Invalid proposal request: number of addresses should be 1");
             require(request.addresses[0] != address(0), "Invalid proposal request: first address should be non-zero");
         }
-        else if (request.proposalType == ProposalType.Swap) {
+        else if (proposalType == ProposalType.Swap) {
             require(request.amount > 0, "Invalid proposal request: amount should be positive");
             require(request.amount <= address(this).balance, "Invalid proposal request: amount exceeds balance");
             require(request.addresses.length == 2, "Invalid proposal request: number of addresses should be 2");
@@ -288,19 +299,22 @@ contract MutualFund {
                 "Invalid proposal request: first and second address should not be equal"
             );
         }
-        else if (request.proposalType == ProposalType.AddMember) {
+        else if (proposalType == ProposalType.AddMember) {
             for (uint i = 0; i < request.addresses.length; i++) {
                 address addr = request.addresses[i];
 
                 require(!hasMemberWithAddress(addr), "Member already exists");
             }
         }
-        else if (request.proposalType == ProposalType.KickMember) {
+        else if (proposalType == ProposalType.KickMember) {
             for (uint i = 0; i < request.addresses.length; i++) {
                 address addr = request.addresses[i];
 
                 require(hasMemberWithAddress(addr), "Member does not exist");
             }
+        }
+        else if (proposalType == ProposalType.ChangeVotingPeriod || proposalType == ProposalType.ChangeGracePeriod) {
+            require(block.timestamp + request.amount >= block.timestamp, "Time period too big");
         }
     }
 
