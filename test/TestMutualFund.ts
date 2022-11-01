@@ -1,35 +1,17 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { MutualFund } from "../typechain-types";
-import { BigNumber, BigNumberish } from "ethers";
+import {
+    defaultFundConfig, depositFunds,
+    executeProposal,
+    ProposalType,
+    submitProposal,
+    voteAgainstProposal, voteForProposal,
+} from './common';
 const ERC20 = require("@openzeppelin/contracts/build/contracts/ERC20.json");
 
-enum ProposalType {
-    DepositFunds,
-    AddAsset,
-    Swap,
-    AddMember,
-    KickMember,
-    ChangeVotingPeriod,
-    ChangeGracePeriod
-}
-
 describe("MutualFund", function () {
-
-    it("should add sender to members upon creation", async () => {
-        const MutualFund = await ethers.getContractFactory("MutualFund");
-        const fund = await MutualFund.deploy(defaultFundConfig());
-
-        const members = await fund.getMembers();
-
-        expect(members).to.have.lengthOf(1);
-
-        const [signer] = await ethers.getSigners();
-
-        const member = members.find(elem => elem.addr === signer.address);
-
-        expect(member).to.not.be.null;
-    });
 
     it("should be able to deposit funds with proposal", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
@@ -220,98 +202,6 @@ describe("MutualFund", function () {
         const fullExitCalcResult = signerBalanceAfterPartialExit.sub(fullExitGasUsed).add(fullExitToReturn);
 
         expect(signerBalanceAfterFullExit.eq(fullExitCalcResult)).to.be.true;
-    });
-
-    it("should be able to invite a new member and kick a member", async () => {
-        const MutualFund = await ethers.getContractFactory("MutualFund");
-        const fund = await MutualFund.deploy(defaultFundConfig());
-        const [founder, member1] = await ethers.getSigners();
-
-        await depositFunds(fund, founder.address, ethers.utils.parseEther("1000"));
-
-        const memberProposalId = await submitProposal(fund, founder.address, {
-            proposalType: ProposalType.AddMember,
-            amount: 0,
-            addresses: [member1.address]
-        });
-
-        await executeProposal(fund, founder.address, memberProposalId);
-
-        // member1 should now be a member.
-
-        const members = await fund.getMembers();
-
-        expect(members).to.have.lengthOf(2);
-
-        const member1Record = members.find(elem => elem.addr === member1.address);
-
-        expect(member1Record).to.not.be.null;
-
-        // member1 should now be able to deposit funds.
-
-        const depositProposalId = await submitProposal(
-            fund,
-            member1.address,
-            {
-                proposalType: ProposalType.DepositFunds,
-                amount: ethers.utils.parseEther("100"),
-                addresses: []
-            }
-        );
-        await expect(
-            fund.connect(await ethers.getSigner(member1.address)).executeProposal(
-                depositProposalId,
-                {
-                    value: ethers.utils.parseEther("100")
-                }
-            )
-        ).to.be.revertedWith("Voting or grace period is in progress");
-        await voteForProposal(fund, founder.address, depositProposalId);
-        await fund.connect(await ethers.getSigner(member1.address)).executeProposal(
-            depositProposalId,
-            {
-                value: ethers.utils.parseEther("100")
-            }
-        );
-        const endingMemberBalance = (await fund.getMember(member1.address)).balance;
-        expect(endingMemberBalance.sub(ethers.utils.parseEther("100"))).to.be.equal(0);
-
-        await expect(
-            fund.submitProposal(
-                {
-                    proposalType: ProposalType.AddMember,
-                    amount: 0,
-                    addresses: [member1.address]
-                }
-            )
-        ).to.be.revertedWith("Member already exists");
-
-        // Now we kick member1.
-
-        const kickProposalId = await submitProposal(fund, founder.address, {
-            proposalType: ProposalType.KickMember,
-            amount: 0,
-            addresses: [member1.address]
-        });
-        await voteAgainstProposal(fund, member1.address, kickProposalId);
-
-        await expect(
-            fund.connect(await ethers.getSigner(founder.address)).executeProposal(kickProposalId)
-        ).to.be.revertedWith("Grace period is in progress");
-
-        // Wait for voting and grace period to pass.
-        await ethers.provider.send("evm_increaseTime", [3 * 60 * 60 + 10 * 60]);
-        await ethers.provider.send("evm_mine", []);
-
-        const memberOwnBalanceBeforeKick = await ethers.provider.getBalance(member1.address);
-
-        await executeProposal(fund, founder.address, kickProposalId);
-
-        const memberOwnBalanceAfterKick = await ethers.provider.getBalance(member1.address);
-
-        // We should return funds to kicked member.
-        expect(memberOwnBalanceAfterKick.sub(memberOwnBalanceBeforeKick.add(ethers.utils.parseEther("100"))))
-            .to.be.approximately(0, 100);
     });
 
     it("should be able to add asset and make a swap", async () => {
@@ -548,7 +438,7 @@ describe("MutualFund", function () {
         });
         await voteAgainstProposal(fund, member1.address, gracePeriod2ProposalId);
         // Wait for voting period to pass. There should be no grace period.
-        await waitSeconds(2 * 60 * 60 + 10);
+        await time.increase(2 * 60 * 60 + 10);
         await executeProposal(fund, founder.address, gracePeriod2ProposalId);
 
         // Now try to kick a member.
@@ -564,7 +454,7 @@ describe("MutualFund", function () {
         ).to.be.revertedWith("Grace period is in progress");
 
         // Wait for voting and grace period to pass.
-        await waitSeconds(2 * 60 * 60 + 11 * 60);
+        await time.increase(2 * 60 * 60 + 11 * 60);
 
         // The proposal should be now successfully executed.
         await executeProposal(fund, founder.address, kickProposalId);
@@ -624,84 +514,3 @@ describe("MutualFund", function () {
         ).to.be.revertedWithPanic(0x11);
     });
 });
-
-async function depositFunds(fund: MutualFund, from: string, amount: BigNumberish) {
-    const proposalId = await submitProposal(
-        fund,
-        from,
-        {
-            proposalType: ProposalType.DepositFunds,
-            amount,
-            addresses: []
-        }
-    );
-
-    await executeProposal(
-        fund,
-        from,
-        proposalId,
-        amount
-    );
-}
-
-function defaultFundConfig(): MutualFund.ConfigurationStruct {
-    return {
-        votingPeriod: 2 * 60 * 60,
-        gracePeriod: 60 * 60
-    };
-}
-
-async function waitSeconds(seconds: number) {
-    await ethers.provider.send("evm_increaseTime", [seconds]);
-    await ethers.provider.send("evm_mine", []);
-}
-
-async function submitProposal(fund: MutualFund, from: string, proposal: MutualFund.ProposalRequestStruct): Promise<BigNumber> {
-    const submitProposalTx = await fund.connect(await ethers.getSigner(from)).submitProposal(
-        proposal
-    );
-    const submitProposalResult = await submitProposalTx.wait();
-
-    const newProposalEvent = submitProposalResult.events?.find(evt => evt.event === "NewProposal")
-
-    expect(newProposalEvent).to.not.be.undefined;
-
-    const proposalId = newProposalEvent?.args?.["id"]
-
-    expect(proposalId).to.not.be.undefined;
-
-    return proposalId;
-}
-
-async function voteForProposal(fund: MutualFund, from: string, proposalId: BigNumberish) {
-    const voteResultPromise = fund.connect(await ethers.getSigner(from)).vote(
-        proposalId,
-        true
-    );
-
-    await expect(voteResultPromise)
-        .to.emit(fund, "NewVote")
-        .withArgs(proposalId, from, true);
-}
-
-async function voteAgainstProposal(fund: MutualFund, from: string, proposalId: BigNumberish) {
-    const voteResultPromise = fund.connect(await ethers.getSigner(from)).vote(
-        proposalId,
-        false
-    );
-
-    await expect(voteResultPromise)
-        .to.emit(fund, "NewVote")
-        .withArgs(proposalId, from, false);
-}
-
-async function executeProposal(fund: MutualFund, from: string, proposalId: BigNumberish, value?: BigNumberish) {
-    const executeResultPromise = fund.connect(await ethers.getSigner(from)).executeProposal(
-        proposalId,
-        { value }
-    );
-
-    await expect(executeResultPromise)
-        .to.emit(fund, "ProposalExecuted")
-        .withArgs(proposalId);
-}
