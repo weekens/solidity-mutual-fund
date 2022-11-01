@@ -227,7 +227,7 @@ describe("MutualFund", function () {
         const fund = await MutualFund.deploy(defaultFundConfig());
         const [founder, member1] = await ethers.getSigners();
 
-        await depositFunds(fund, founder.address, 10000);
+        await depositFunds(fund, founder.address, ethers.utils.parseEther("1000"));
 
         const memberProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.AddMember,
@@ -254,7 +254,7 @@ describe("MutualFund", function () {
             member1.address,
             {
                 proposalType: ProposalType.DepositFunds,
-                amount: 1000,
+                amount: ethers.utils.parseEther("100"),
                 addresses: []
             }
         );
@@ -262,7 +262,7 @@ describe("MutualFund", function () {
             fund.connect(await ethers.getSigner(member1.address)).executeProposal(
                 depositProposalId,
                 {
-                    value: 1000
+                    value: ethers.utils.parseEther("100")
                 }
             )
         ).to.be.revertedWith("Voting or grace period is in progress");
@@ -270,11 +270,11 @@ describe("MutualFund", function () {
         await fund.connect(await ethers.getSigner(member1.address)).executeProposal(
             depositProposalId,
             {
-                value: 1000
+                value: ethers.utils.parseEther("100")
             }
         );
         const endingMemberBalance = (await fund.getMember(member1.address)).balance;
-        expect(endingMemberBalance.toNumber()).to.be.equal(1000);
+        expect(endingMemberBalance.sub(ethers.utils.parseEther("100"))).to.be.equal(0);
 
         await expect(
             fund.submitProposal(
@@ -310,7 +310,8 @@ describe("MutualFund", function () {
         const memberOwnBalanceAfterKick = await ethers.provider.getBalance(member1.address);
 
         // We should return funds to kicked member.
-        expect(memberOwnBalanceAfterKick.sub(memberOwnBalanceBeforeKick.add(1000))).to.be.approximately(0, 1);
+        expect(memberOwnBalanceAfterKick.sub(memberOwnBalanceBeforeKick.add(ethers.utils.parseEther("100"))))
+            .to.be.approximately(0, 100);
     });
 
     it("should be able to add asset and make a swap", async () => {
