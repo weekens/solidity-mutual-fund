@@ -8,9 +8,16 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract MutualFundAsset is IAsset {
 
     address tokenAddress;
+    address fundAddress;
 
-    constructor(address initTokenAddr) {
-        tokenAddress = initTokenAddr;
+    constructor(address initTokenAddress, address initFundAddress) {
+        tokenAddress = initTokenAddress;
+        fundAddress = initFundAddress;
+    }
+
+    modifier fundOnly() {
+        require(msg.sender == fundAddress, "Only allowed to owning fund");
+        _;
     }
 
     function getTokenAddress() external override(IAsset) view returns (address) {
@@ -21,7 +28,7 @@ contract MutualFundAsset is IAsset {
         return IERC20(tokenAddress).balanceOf(address(this));
     }
 
-    function approve(address spender, uint256 amount) external returns (bool) {
+    function approve(address spender, uint256 amount) fundOnly external returns (bool) {
         return IERC20(tokenAddress).approve(spender, amount);
     }
 }

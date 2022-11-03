@@ -209,8 +209,8 @@ describe("MutualFund", function () {
         const assetTokenContract = new ethers.Contract(assetTokenAddress, ERC20.abi, ethers.provider);
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const MutualFundAsset = await ethers.getContractFactory("MutualFundAsset");
-        const asset = await MutualFundAsset.deploy(assetTokenAddress);
         const fund = await MutualFund.deploy(defaultFundConfig());
+        const asset = await MutualFundAsset.deploy(assetTokenAddress, fund.address);
 
         const initialAssetBalance = await assetTokenContract.balanceOf(asset.address);
 
