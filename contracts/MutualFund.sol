@@ -17,6 +17,7 @@ contract MutualFund {
     struct Configuration {
         uint64 votingPeriod;
         uint64 gracePeriod;
+        uint64 proposalExpiryPeriod;
     }
 
     struct Member {
@@ -370,6 +371,7 @@ contract MutualFund {
 
     function checkCanExecuteProposal(address memberAddress, Proposal storage proposal) private view {
         require(proposal.author == memberAddress, "Executor is not a proposal author");
+        require(proposal.createdAt + configuration.proposalExpiryPeriod > block.timestamp, "Proposal has expired");
 
         uint supportBalance = 0;
         uint noSupportBalance = 0;

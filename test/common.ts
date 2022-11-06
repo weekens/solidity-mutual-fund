@@ -35,7 +35,8 @@ export async function depositFunds(fund: MutualFund, from: string, amount: BigNu
 export function defaultFundConfig(): MutualFund.ConfigurationStruct {
     return {
         votingPeriod: 2 * 60 * 60,
-        gracePeriod: 60 * 60
+        gracePeriod: 60 * 60,
+        proposalExpiryPeriod: 5 * 24 * 60 * 60
     };
 }
 

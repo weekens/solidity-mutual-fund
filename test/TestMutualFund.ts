@@ -313,7 +313,8 @@ describe("MutualFund", function () {
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const fund = await MutualFund.deploy({
             votingPeriod: 2 * 60 * 60,
-            gracePeriod: 60 * 60
+            gracePeriod: 60 * 60,
+            proposalExpiryPeriod: defaultFundConfig().proposalExpiryPeriod
         });
         const [founder, member1, member2] = await ethers.getSigners();
 
@@ -378,8 +379,7 @@ describe("MutualFund", function () {
             .to.be.revertedWith("Voting or grace period is in progress");
 
         // Wait for grace period to pass.
-        await ethers.provider.send("evm_increaseTime", [60 * 60]);
-        await ethers.provider.send("evm_mine", []);
+        await time.increase(60 * 60);
 
         // Now the proposal should be successfully executed.
         await executeProposal(fund, member1.address, member2ProposalId);
@@ -387,7 +387,29 @@ describe("MutualFund", function () {
         expect(members).to.have.lengthOf(3);
     });
 
-    it("should prohibit executing an expired proposal");
+    it("should prohibit executing an expired proposal", async () => {
+        const MutualFund = await ethers.getContractFactory("MutualFund");
+        const fund = await MutualFund.deploy(defaultFundConfig());
+        const [founder, member1] = await ethers.getSigners();
+
+        // Submit proposal.
+        const memberProposalId = await submitProposal(fund, founder.address, {
+            proposalType: ProposalType.AddMember,
+            amount: 0,
+            addresses: [member1.address]
+        });
+
+        // Wait for proposal expiry.
+        await time.increase(10 * 24 * 60 * 60);
+
+        // The proposal should expire.
+        await expect(
+            fund.executeProposal(
+                memberProposalId,
+                { value: 0 }
+            ))
+            .to.be.revertedWith("Proposal has expired");
+    });
 
     it("should allow a grace period if there were negative votes");
 
