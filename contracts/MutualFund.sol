@@ -32,7 +32,8 @@ contract MutualFund {
         AddMember,
         KickMember,
         ChangeVotingPeriod,
-        ChangeGracePeriod
+        ChangeGracePeriod,
+        ChangeProposalExpiryPeriod
     }
 
     struct ProposalRequest {
@@ -156,6 +157,9 @@ contract MutualFund {
         }
         else if (proposalType == ProposalType.ChangeGracePeriod) {
             configuration.gracePeriod = uint64(proposal.request.amount);
+        }
+        else if (proposalType == ProposalType.ChangeProposalExpiryPeriod) {
+            configuration.proposalExpiryPeriod = uint64(proposal.request.amount);
         }
         else {
             revert("Unknown proposal type");
@@ -314,7 +318,11 @@ contract MutualFund {
                 require(hasMemberWithAddress(addr), "Member does not exist");
             }
         }
-        else if (proposalType == ProposalType.ChangeVotingPeriod || proposalType == ProposalType.ChangeGracePeriod) {
+        else if (
+            proposalType == ProposalType.ChangeVotingPeriod ||
+            proposalType == ProposalType.ChangeGracePeriod ||
+            proposalType == ProposalType.ChangeProposalExpiryPeriod
+        ) {
             require(block.timestamp + request.amount >= block.timestamp, "Time period too big");
         }
     }
