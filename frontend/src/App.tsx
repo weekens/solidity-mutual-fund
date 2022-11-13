@@ -1,10 +1,11 @@
-import { ReactElement } from 'react';
-import styled from 'styled-components';
-import { ActivateDeactivate } from './components/ActivateDeactivate';
-import { Greeter } from './components/Greeter';
-import { SectionDivider } from './components/SectionDivider';
-import { SignMessage } from './components/SignMessage';
-import { WalletStatus } from './components/WalletStatus';
+import { ReactElement } from "react";
+import styled from "styled-components";
+import { ActivateDeactivate } from "./components/ActivateDeactivate";
+import { Greeter } from "./components/Greeter";
+import { SectionDivider } from "./components/SectionDivider";
+import { SignMessage } from "./components/SignMessage";
+import { WalletStatus } from "./components/WalletStatus";
+import { MutualFund } from "./components/MutualFund";
 
 const StyledAppDiv = styled.div`
   display: grid;
@@ -14,13 +15,15 @@ const StyledAppDiv = styled.div`
 export function App(): ReactElement {
   return (
     <StyledAppDiv>
-      <ActivateDeactivate />
-      <SectionDivider />
-      <WalletStatus />
-      <SectionDivider />
-      <SignMessage />
-      <SectionDivider />
-      <Greeter />
+      <ActivateDeactivate/>
+      <SectionDivider/>
+      <WalletStatus/>
+      <SectionDivider/>
+      <SignMessage/>
+      <SectionDivider/>
+      <Greeter/>
+      <SectionDivider/>
+      <MutualFund/>
     </StyledAppDiv>
   );
 }

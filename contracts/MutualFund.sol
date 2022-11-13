@@ -88,6 +88,10 @@ contract MutualFund {
         return member;
     }
 
+    function getTotalBalance() public view returns (uint) {
+        return totalBalance;
+    }
+
     function getAssets() public view returns (IAsset[] memory) {
         return assets;
     }
