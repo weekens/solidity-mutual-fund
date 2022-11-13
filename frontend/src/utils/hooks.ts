@@ -48,7 +48,7 @@ export function useInactiveListener(suppress: boolean = false): void {
   const { active, error, activate } = useWeb3React<Provider>();
 
   useEffect((): (() => void) | undefined => {
-    const { ethereum } = window as any;
+    const ethereum = window.ethereum;
 
     if (ethereum && ethereum.on && !active && !error && !suppress) {
       const handleConnect = (): void => {
