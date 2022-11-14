@@ -7,7 +7,7 @@
     "test": "npx hardhat test",
     "heroku-prebuild": "cd frontend && npm ci",
     "build": "npx hardhat compile && cd frontend && npm run build",
-    "start": "cd frontend && npm start"
+    "start": "cd frontend && npx serve -s build"
   },
   "author": "",
   "license": "UNLICENSED",
