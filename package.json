@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npx hardhat test"
+    "test": "npx hardhat test",
+    "heroku-prebuild": "cd frontend && npm ci",
+    "build": "npx hardhat compile && cd frontend && npm run build",
+    "start": "cd frontend && npm start"
   },
   "author": "",
   "license": "UNLICENSED",
