@@ -8,7 +8,7 @@ import {
   useState
 } from 'react';
 import styled from 'styled-components';
-import MutualFundArtifact from "../../../artifacts/contracts/MutualFund.sol/MutualFund.json"
+import MutualFundArtifact from "../contracts/MutualFund.sol/MutualFund.json"
 import { Provider } from '../utils/provider';
 
 const StyledLabel = styled.label`
@@ -26,6 +26,15 @@ const StyledButton = styled.button`
   border-radius: 1rem;
   border-color: blue;
   cursor: pointer;
+`;
+
+const StyledDiv = styled.div`
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 135px 2.7fr 1fr;
+  grid-gap: 10px;
+  place-self: center;
+  align-items: center;
 `;
 
 export function MutualFund(): ReactElement {
@@ -77,8 +86,7 @@ export function MutualFund(): ReactElement {
   }
 
   return (
-    <>
-      <div></div>
+    <StyledDiv>
       <StyledLabel htmlFor="contractAddressInput">Contract address</StyledLabel>
       <StyledInput
         id="contractAddressInput"
@@ -95,9 +103,9 @@ export function MutualFund(): ReactElement {
       >
         Apply
       </StyledButton>
-      <div></div>
       <StyledLabel>Total balance:</StyledLabel>
       <StyledLabel>{totalBalance}</StyledLabel>
-    </>
+      <div></div>
+    </StyledDiv>
   );
 }
