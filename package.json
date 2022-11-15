@@ -6,8 +6,10 @@
   "scripts": {
     "test": "npx hardhat test",
     "heroku-prebuild": "cd frontend && npm ci",
-    "build": "npx hardhat compile && cd frontend && npm run build",
-    "start": "cd frontend && npx serve -s build"
+    "compile-contracts": "npx hardhat compile",
+    "build": "npm run compile-contracts && cd frontend && npm run build",
+    "start": "cd frontend && npx serve -s build",
+    "deploy-contracts-testnet": "npm run compile-contracts && npx hardhat run scripts/deploy.ts --network goerli"
   },
   "author": "",
   "license": "UNLICENSED",
