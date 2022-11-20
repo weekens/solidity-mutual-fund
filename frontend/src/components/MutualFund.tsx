@@ -45,7 +45,7 @@ export function MutualFund(): ReactElement {
   const [contractAddress, setContractAddress] = useState<string>("");
   const [contractAddressInput, setContractAddressInput] = useState<string>("");
   const [contract, setContract] = useState<Contract>();
-  const [totalBalance, setTotalBalance] = useState<number>(0);
+  const [totalBalance, setTotalBalance] = useState<string>("");
 
   useEffect((): void => {
     if (!library) {
@@ -65,19 +65,17 @@ export function MutualFund(): ReactElement {
       signer
     );
 
-    try {
-      const mutualFundContract = await MutualFundContract.attach(contractAddressInput);
+    const mutualFundContract = await MutualFundContract.attach(contractAddressInput);
 
-      const totalBalance = await mutualFundContract.getTotalBalance();
+    const totalBalance = await mutualFundContract.getTotalBalance();
 
-      setContract(mutualFundContract);
-      setContractAddress(contractAddressInput);
-      setTotalBalance(totalBalance);
-    } catch (error: any) {
-      window.alert(
-        'Error!' + (error && error.message ? `\n\n${error.message}` : '')
-      );
-    }
+    setContract(mutualFundContract);
+    setContractAddress(contractAddressInput);
+    setTotalBalance(totalBalance.toString());
+
+    const members = await mutualFundContract.getMembers();
+
+    console.log("members =", members);
   }
 
   function handleContractAddressInputChange(event: ChangeEvent<HTMLInputElement>): void {
@@ -94,10 +92,10 @@ export function MutualFund(): ReactElement {
         onChange={handleContractAddressInputChange}
       ></StyledInput>
       <StyledButton
-        disabled={!active || !contract}
+        disabled={!active || !contractAddressInput}
         style={{
-          cursor: !active || !contract ? 'not-allowed' : 'pointer',
-          borderColor: !active || !contract ? 'unset' : 'blue'
+          cursor: !active || !contractAddressInput ? 'not-allowed' : 'pointer',
+          borderColor: !active || !contract || !contractAddressInput ? 'unset' : 'blue'
         }}
         onClick={handleContractAddressSubmit}
       >
