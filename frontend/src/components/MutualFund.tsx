@@ -37,6 +37,26 @@ const StyledDiv = styled.div`
   align-items: center;
 `;
 
+interface MemberModel {
+  addr: string;
+  balance: number;
+}
+
+function Member(props: MemberModel): ReactElement {
+  return (
+    <div>
+      <div>
+        <StyledLabel>Address:</StyledLabel>
+        <StyledLabel>{props.addr}</StyledLabel>
+      </div>
+      <div>
+        <StyledLabel>Balance:</StyledLabel>
+        <StyledLabel>{props.balance.toString()}</StyledLabel>
+      </div>
+    </div>
+  );
+}
+
 export function MutualFund(): ReactElement {
   const context = useWeb3React<Provider>();
   const { library, active } = context;
@@ -46,6 +66,7 @@ export function MutualFund(): ReactElement {
   const [contractAddressInput, setContractAddressInput] = useState<string>("");
   const [contract, setContract] = useState<Contract>();
   const [totalBalance, setTotalBalance] = useState<string>("");
+  const [members, setMembers] = useState<MemberModel[]>([]);
 
   useEffect((): void => {
     if (!library) {
@@ -76,6 +97,8 @@ export function MutualFund(): ReactElement {
     const members = await mutualFundContract.getMembers();
 
     console.log("members =", members);
+
+    setMembers(members);
   }
 
   function handleContractAddressInputChange(event: ChangeEvent<HTMLInputElement>): void {
@@ -104,6 +127,11 @@ export function MutualFund(): ReactElement {
       <StyledLabel>Total balance:</StyledLabel>
       <StyledLabel>{totalBalance}</StyledLabel>
       <div></div>
+      {
+        members.map((member) => {
+          return <Member key={member.addr} addr={member.addr} balance={member.balance}/>
+        })
+      }
     </StyledDiv>
   );
 }
