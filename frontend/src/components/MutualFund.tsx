@@ -65,7 +65,7 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-function a11yProps(index: number) {
+function tabProps(index: number) {
   return {
     id: `simple-tab-${index}`,
     "aria-controls": `simple-tabpanel-${index}`,
@@ -124,26 +124,20 @@ export function MutualFund(): ReactElement {
     <Box sx={{ width: "100%" }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs value={tabIndex} onChange={handleTabChange} aria-label="basic tabs example">
-          <Tab label="Home" {...a11yProps(0)} />
-          <Tab label="Item Two" {...a11yProps(1)} />
-          <Tab label="Item Three" {...a11yProps(2)} />
+          <Tab label="Home" {...tabProps(0)} />
+          <Tab label="Members" {...tabProps(1)} />
         </Tabs>
       </Box>
       <TabPanel value={tabIndex} index={0}>
         <StyledLabel>Total balance:</StyledLabel>
         <StyledLabel>{totalBalance}</StyledLabel>
-        <div></div>
+      </TabPanel>
+      <TabPanel value={tabIndex} index={1}>
         {
           members.map((member) => {
             return <Member key={member.addr} addr={member.addr} balance={member.balance}/>
           })
         }
-      </TabPanel>
-      <TabPanel value={tabIndex} index={1}>
-        Item Two
-      </TabPanel>
-      <TabPanel value={tabIndex} index={2}>
-        Item Three
       </TabPanel>
     </Box>
   );
