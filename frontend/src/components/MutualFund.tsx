@@ -1,27 +1,22 @@
-import { useWeb3React } from '@web3-react/core';
-import { Contract, ethers, Signer } from 'ethers';
+import { useWeb3React } from "@web3-react/core";
+import { Contract, ethers, Signer } from "ethers";
 import {
   ReactElement,
   useEffect,
   useState
-} from 'react';
-import styled from 'styled-components';
+} from "react";
+import styled from "styled-components";
 import MutualFundArtifact from "../contracts/MutualFund.sol/MutualFund.json"
-import { Provider } from '../utils/provider';
+import { Provider } from "../utils/provider";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
 
 const StyledLabel = styled.label`
   font-weight: bold;
-`;
-
-const StyledDiv = styled.div`
-  display: grid;
-  grid-template-rows: 1fr 1fr 1fr;
-  grid-template-columns: 135px 2.7fr 1fr;
-  grid-gap: 10px;
-  place-self: center;
-  align-items: center;
 `;
 
 interface MemberModel {
@@ -44,12 +39,46 @@ function Member(props: MemberModel): ReactElement {
   );
 }
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          <Typography>{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `simple-tab-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
+  };
+}
+
 export function MutualFund(): ReactElement {
   const context = useWeb3React<Provider>();
   const { library, active } = context;
 
   const [signer, setSigner] = useState<Signer>();
   const [contract, setContract] = useState<Contract>();
+  const [tabIndex, setTabIndex] = useState<number>(0);
   const [totalBalance, setTotalBalance] = useState<string>("");
   const [members, setMembers] = useState<MemberModel[]>([]);
 
@@ -87,16 +116,35 @@ export function MutualFund(): ReactElement {
     loadData().catch(console.error);
   }, [library]);
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabIndex(newValue);
+  };
+
   return (
-    <StyledDiv>
-      <StyledLabel>Total balance:</StyledLabel>
-      <StyledLabel>{totalBalance}</StyledLabel>
-      <div></div>
-      {
-        members.map((member) => {
-          return <Member key={member.addr} addr={member.addr} balance={member.balance}/>
-        })
-      }
-    </StyledDiv>
+    <Box sx={{ width: "100%" }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Tabs value={tabIndex} onChange={handleTabChange} aria-label="basic tabs example">
+          <Tab label="Home" {...a11yProps(0)} />
+          <Tab label="Item Two" {...a11yProps(1)} />
+          <Tab label="Item Three" {...a11yProps(2)} />
+        </Tabs>
+      </Box>
+      <TabPanel value={tabIndex} index={0}>
+        <StyledLabel>Total balance:</StyledLabel>
+        <StyledLabel>{totalBalance}</StyledLabel>
+        <div></div>
+        {
+          members.map((member) => {
+            return <Member key={member.addr} addr={member.addr} balance={member.balance}/>
+          })
+        }
+      </TabPanel>
+      <TabPanel value={tabIndex} index={1}>
+        Item Two
+      </TabPanel>
+      <TabPanel value={tabIndex} index={2}>
+        Item Three
+      </TabPanel>
+    </Box>
   );
 }
