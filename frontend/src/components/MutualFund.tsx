@@ -1,23 +1,16 @@
 import { useWeb3React } from "@web3-react/core";
 import { Contract, ethers, Signer } from "ethers";
-import {
-  ReactElement,
-  useEffect,
-  useState
-} from "react";
-import styled from "styled-components";
+import { ReactElement, ReactNode, useEffect, useState } from "react";
 import MutualFundArtifact from "../contracts/MutualFund.sol/MutualFund.json"
 import { Provider } from "../utils/provider";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
+import Stack from "@mui/material/Stack";
 
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
-
-const StyledLabel = styled.label`
-  font-weight: bold;
-`;
 
 interface MemberModel {
   addr: string;
@@ -26,21 +19,42 @@ interface MemberModel {
 
 function Member(props: MemberModel): ReactElement {
   return (
-    <div>
-      <div>
-        <StyledLabel>Address:</StyledLabel>
-        <StyledLabel>{props.addr}</StyledLabel>
-      </div>
-      <div>
-        <StyledLabel>Balance:</StyledLabel>
-        <StyledLabel>{props.balance.toString()}</StyledLabel>
-      </div>
-    </div>
+    <Grid container>
+      <Grid item xs={6}>
+        Address:
+      </Grid>
+      <Grid item xs={6}>
+        {props.addr}
+      </Grid>
+      <Grid item xs={6}>
+        Balance:
+      </Grid>
+      <Grid item xs={6}>
+        {props.balance.toString()}
+      </Grid>
+    </Grid>
+  );
+}
+
+interface AccountInfoModel {
+  totalBalance: string;
+}
+
+function AccountInfo(props: AccountInfoModel): ReactElement {
+  return (
+    <Grid container>
+      <Grid item xs={6}>
+        Total balance:
+      </Grid>
+      <Grid item xs={6}>
+        {props.totalBalance}
+      </Grid>
+    </Grid>
   );
 }
 
 interface TabPanelProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
   index: number;
   value: number;
 }
@@ -129,15 +143,18 @@ export function MutualFund(): ReactElement {
         </Tabs>
       </Box>
       <TabPanel value={tabIndex} index={0}>
-        <StyledLabel>Total balance:</StyledLabel>
-        <StyledLabel>{totalBalance}</StyledLabel>
+        <AccountInfo totalBalance={totalBalance}/>
       </TabPanel>
       <TabPanel value={tabIndex} index={1}>
+        <Stack>
         {
           members.map((member) => {
-            return <Member key={member.addr} addr={member.addr} balance={member.balance}/>
+            return (
+              <Member key={member.addr} addr={member.addr} balance={member.balance}/>
+            )
           })
         }
+        </Stack>
       </TabPanel>
     </Box>
   );
