@@ -1,14 +1,15 @@
-import { AbstractConnector } from '@web3-react/abstract-connector';
-import { UnsupportedChainIdError, useWeb3React } from '@web3-react/core';
+import { AbstractConnector } from "@web3-react/abstract-connector";
+import { UnsupportedChainIdError, useWeb3React } from "@web3-react/core";
 import {
   NoEthereumProviderError,
   UserRejectedRequestError
-} from '@web3-react/injected-connector';
-import { MouseEvent, ReactElement, useState } from 'react';
-import styled from 'styled-components';
-import { injected } from '../utils/connectors';
-import { useEagerConnect, useInactiveListener } from '../utils/hooks';
-import { Provider } from '../utils/provider';
+} from "@web3-react/injected-connector";
+import { MouseEvent, ReactElement, useState } from "react";
+import { injected } from "../utils/connectors";
+import { useEagerConnect, useInactiveListener } from "../utils/hooks";
+import { Provider } from "../utils/provider";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
 
 type ActivateFunction = (
   connector: AbstractConnector,
@@ -36,36 +37,11 @@ function getErrorMessage(error: Error): string {
   return errorMessage;
 }
 
-const StyledActivateDeactivateDiv = styled.div`
-  display: grid;
-  grid-template-rows: 1fr;
-  grid-template-columns: 1fr 1fr;
-  grid-gap: 10px;
-  place-self: center;
-  align-items: center;
-`;
-
-const StyledActivateButton = styled.button`
-  width: 150px;
-  height: 2rem;
-  border-radius: 1rem;
-  border-color: green;
-  cursor: pointer;
-`;
-
-const StyledDeactivateButton = styled.button`
-  width: 150px;
-  height: 2rem;
-  border-radius: 1rem;
-  border-color: red;
-  cursor: pointer;
-`;
-
 function Activate(): ReactElement {
   const context = useWeb3React<Provider>();
   const { activate, active } = context;
 
-  const [activating, setActivating] = useState<boolean>(false);
+  const [, setActivating] = useState<boolean>(false);
 
   function handleActivate(event: MouseEvent<HTMLButtonElement>): void {
     event.preventDefault();
@@ -88,16 +64,13 @@ function Activate(): ReactElement {
   useInactiveListener(!eagerConnectionSuccessful);
 
   return (
-    <StyledActivateButton
+    <Button
+      variant="contained"
       disabled={active}
-      style={{
-        cursor: active ? 'not-allowed' : 'pointer',
-        borderColor: activating ? 'orange' : active ? 'unset' : 'green'
-      }}
       onClick={handleActivate}
     >
       Connect
-    </StyledActivateButton>
+    </Button>
   );
 }
 
@@ -112,16 +85,12 @@ function Deactivate(): ReactElement {
   }
 
   return (
-    <StyledDeactivateButton
+    <Button
       disabled={!active}
-      style={{
-        cursor: active ? 'pointer' : 'not-allowed',
-        borderColor: active ? 'red' : 'unset'
-      }}
       onClick={handleDeactivate}
     >
       Disconnect
-    </StyledDeactivateButton>
+    </Button>
   );
 }
 
@@ -134,9 +103,9 @@ export function ActivateDeactivate(): ReactElement {
   }
 
   return (
-    <StyledActivateDeactivateDiv>
+    <Stack direction="row" justifyContent="flex-end">
       <Activate />
       <Deactivate />
-    </StyledActivateDeactivateDiv>
+    </Stack>
   );
 }
