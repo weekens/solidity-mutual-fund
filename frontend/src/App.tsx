@@ -1,15 +1,16 @@
 import { ReactElement } from "react";
 import { ActivateDeactivate } from "./components/ActivateDeactivate";
-import { SectionDivider } from "./components/SectionDivider";
 import { MutualFund } from "./components/MutualFund";
 import Stack from "@mui/material/Stack";
+import Container from "@mui/material/Container";
 
 export function App(): ReactElement {
   return (
     <Stack>
       <ActivateDeactivate/>
-      <SectionDivider/>
-      <MutualFund/>
+      <Container>
+        <MutualFund/>
+      </Container>
     </Stack>
   );
 }
