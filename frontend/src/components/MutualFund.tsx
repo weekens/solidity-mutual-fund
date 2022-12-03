@@ -36,11 +36,11 @@ function Member(props: MemberModel): ReactElement {
   );
 }
 
-interface AccountInfoModel {
+interface AccountInfoProps {
   totalBalance: string;
 }
 
-function AccountInfo(props: AccountInfoModel): ReactElement {
+function AccountInfo(props: AccountInfoProps): ReactElement {
   return (
     <Grid container>
       <Grid item xs={6}>
@@ -50,6 +50,78 @@ function AccountInfo(props: AccountInfoModel): ReactElement {
         {props.totalBalance}
       </Grid>
     </Grid>
+  );
+}
+
+enum ProposalType {
+  DepositFunds,
+  AddAsset,
+  Swap,
+  AddMember,
+  KickMember,
+  ChangeVotingPeriod,
+  ChangeGracePeriod
+}
+
+interface ProposalRequestModel {
+  proposalType: ProposalType;
+  amount: string;
+  addresses: string[];
+}
+
+interface VoteModel {
+  memberAddress: string;
+  support: boolean;
+}
+
+interface ProposalModel {
+  id: string;
+  createdAt: string;
+  author: string;
+  request: ProposalRequestModel;
+  votes: VoteModel[];
+}
+
+interface ProposalsProps {
+  proposals: ProposalModel[];
+}
+
+function Proposal(props: ProposalModel): ReactElement {
+  return (
+    <Grid container>
+      <Grid item xs={6}>
+        Author:
+      </Grid>
+      <Grid item xs={6}>
+        {props.author}
+      </Grid>
+      <Grid item xs={6}>
+        Created at:
+      </Grid>
+      <Grid item xs={6}>
+        {props.createdAt}
+      </Grid>
+      <Grid item xs={6}>
+        Type:
+      </Grid>
+      <Grid item xs={6}>
+        {props.request.proposalType}
+      </Grid>
+    </Grid>
+  );
+}
+
+function Proposals(props: ProposalsProps): ReactElement {
+  return (
+    <Stack>
+    {
+      props.proposals.map(proposal => {
+        return (
+          <Proposal key={proposal.id} {...proposal}></Proposal>
+        );
+      })
+    }
+    </Stack>
   );
 }
 
@@ -95,6 +167,7 @@ export function MutualFund(): ReactElement {
   const [tabIndex, setTabIndex] = useState<number>(0);
   const [totalBalance, setTotalBalance] = useState<string>("");
   const [members, setMembers] = useState<MemberModel[]>([]);
+  const [proposals, setProposals] = useState<ProposalModel[]>([]);
 
   useEffect((): void => {
     if (!library) {
@@ -105,7 +178,6 @@ export function MutualFund(): ReactElement {
     const signer = library.getSigner();
 
     setSigner(signer);
-
     const loadData = async () => {
       const MutualFundContract = new ethers.ContractFactory(
         MutualFundArtifact.abi,
@@ -120,11 +192,18 @@ export function MutualFund(): ReactElement {
       setContract(mutualFundContract);
       setTotalBalance(totalBalance.toString());
 
-      const members = await mutualFundContract.getMembers();
+      await Promise.all([
+        mutualFundContract.getMembers().then((members: any) => {
+          console.log("members =", members);
 
-      console.log("members =", members);
+          setMembers(members);
+        }),
+        mutualFundContract.getProposals().then((proposals: any) => {
+          console.log("proposals =", proposals);
 
-      setMembers(members);
+          setProposals(proposals);
+        })
+      ]);
     };
 
     loadData().catch(console.error);
@@ -140,6 +219,7 @@ export function MutualFund(): ReactElement {
         <Tabs value={tabIndex} onChange={handleTabChange} aria-label="basic tabs example">
           <Tab label="Home" {...tabProps(0)} />
           <Tab label="Members" {...tabProps(1)} />
+          <Tab label="Proposals" {...tabProps(2)} />
         </Tabs>
       </Box>
       <TabPanel value={tabIndex} index={0}>
@@ -155,6 +235,9 @@ export function MutualFund(): ReactElement {
           })
         }
         </Stack>
+      </TabPanel>
+      <TabPanel index={tabIndex} value={2}>
+        <Proposals proposals={proposals}/>
       </TabPanel>
     </Box>
   );
