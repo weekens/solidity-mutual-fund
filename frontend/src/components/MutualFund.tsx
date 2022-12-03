@@ -9,6 +9,9 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
+import Button from "@mui/material/Button";
+import AddIcon from '@mui/icons-material/Add';
+import { Modal } from "@mui/material";
 
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
 
@@ -125,6 +128,50 @@ function Proposals(props: ProposalsProps): ReactElement {
   );
 }
 
+function NewProposal(): ReactElement {
+  const [newProposalModalOpen, setNewProposalModelOpen] = useState<boolean>(false);
+
+  const modalStyle = {
+    position: 'absolute' as 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+  };
+
+  function handleNewProposalClick() {
+    setNewProposalModelOpen(true);
+  }
+
+  function handleNewProposalModalClose() {
+    setNewProposalModelOpen(false);
+  }
+
+  return (
+    <>
+      <Button variant="contained" onClick={handleNewProposalClick}>
+        <AddIcon/> New Proposal
+      </Button>
+      <Modal open={newProposalModalOpen} onClose={handleNewProposalModalClose}>
+        <Box sx={modalStyle}>
+          <Stack>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+              New Proposal
+            </Typography>
+            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+              Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
+            </Typography>
+          </Stack>
+        </Box>
+      </Modal>
+    </>
+  );
+}
+
 interface TabPanelProps {
   children?: ReactNode;
   index: number;
@@ -237,7 +284,10 @@ export function MutualFund(): ReactElement {
         </Stack>
       </TabPanel>
       <TabPanel index={tabIndex} value={2}>
-        <Proposals proposals={proposals}/>
+        <Stack>
+          <NewProposal/>
+          <Proposals proposals={proposals}/>
+        </Stack>
       </TabPanel>
     </Box>
   );
