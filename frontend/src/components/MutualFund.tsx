@@ -1,6 +1,6 @@
 import { useWeb3React } from "@web3-react/core";
 import { Contract, ethers, Signer } from "ethers";
-import { ChangeEvent, ReactElement, ReactNode, useEffect, useState } from "react";
+import { ChangeEvent, ReactElement, ReactNode, SyntheticEvent, useEffect, useState } from "react";
 import MutualFundArtifact from "../contracts/MutualFund.sol/MutualFund.json"
 import { Provider } from "../utils/provider";
 import Tabs from "@mui/material/Tabs";
@@ -159,7 +159,17 @@ function Proposals(props: ProposalsProps): ReactElement {
   );
 }
 
-function NewProposal(): ReactElement {
+interface NewProposalSubmitEvent {
+  proposalType: ProposalType;
+  amount?: string;
+  address?: string;
+}
+
+interface NewProposalProps {
+  onSubmit: (event: NewProposalSubmitEvent) => void;
+}
+
+function NewProposal(props: NewProposalProps): ReactElement {
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [proposalType, setProposalType] = useState<ProposalType>();
   const [amount, setAmount] = useState<string>();
@@ -186,8 +196,15 @@ function NewProposal(): ReactElement {
   }
 
   function handleSubmit() {
-    console.log("submit");
     setModalOpen(false);
+
+    if (proposalType != undefined) {
+      props.onSubmit({
+        proposalType,
+        amount,
+        address
+      });
+    }
   }
 
   return (
@@ -215,7 +232,7 @@ function NewProposal(): ReactElement {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>Submit</Button>
+          <Button variant="contained" onClick={handleSubmit} disabled={proposalType === undefined}>Submit</Button>
         </DialogActions>
       </Dialog>
     </>
@@ -306,9 +323,13 @@ export function MutualFund(): ReactElement {
     loadData().catch(console.error);
   }, [library]);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  function handleTabChange(event: SyntheticEvent, newValue: number) {
     setTabIndex(newValue);
-  };
+  }
+
+  function handleNewProposalSubmit(event: NewProposalSubmitEvent) {
+    console.log("new proposal, ", event);
+  }
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -335,7 +356,7 @@ export function MutualFund(): ReactElement {
       </TabPanel>
       <TabPanel index={tabIndex} value={2}>
         <Stack>
-          <NewProposal/>
+          <NewProposal onSubmit={handleNewProposalSubmit} />
           <Proposals proposals={proposals}/>
         </Stack>
       </TabPanel>
