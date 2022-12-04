@@ -11,7 +11,17 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 import AddIcon from '@mui/icons-material/Add';
-import { Modal } from "@mui/material";
+import {
+  Select,
+  SelectChangeEvent,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  FormControl,
+  DialogActions,
+  InputLabel
+} from "@mui/material";
 
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
 
@@ -64,6 +74,27 @@ enum ProposalType {
   KickMember,
   ChangeVotingPeriod,
   ChangeGracePeriod
+}
+
+function toProposalType(t: number): ProposalType {
+  switch (t) {
+    case 0:
+      return ProposalType.DepositFunds;
+    case 1:
+      return ProposalType.AddAsset;
+    case 2:
+      return ProposalType.Swap;
+    case 3:
+      return ProposalType.AddMember;
+    case 4:
+      return ProposalType.KickMember;
+    case 5:
+      return ProposalType.ChangeVotingPeriod;
+    case 6:
+      return ProposalType.ChangeGracePeriod;
+    default:
+      throw new Error("Unknown proposal type");
+  }
 }
 
 interface ProposalRequestModel {
@@ -129,45 +160,52 @@ function Proposals(props: ProposalsProps): ReactElement {
 }
 
 function NewProposal(): ReactElement {
-  const [newProposalModalOpen, setNewProposalModelOpen] = useState<boolean>(false);
-
-  const modalStyle = {
-    position: 'absolute' as 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-  };
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [proposalType, setProposalType] = useState<ProposalType>();
 
   function handleNewProposalClick() {
-    setNewProposalModelOpen(true);
+    setModalOpen(true);
   }
 
-  function handleNewProposalModalClose() {
-    setNewProposalModelOpen(false);
+  function handleClose() {
+    setModalOpen(false);
+  }
+
+  function handleProposalTypeChange(event: SelectChangeEvent<number>) {
+    setProposalType(toProposalType(Number(event.target.value)));
+  }
+
+  function handleSubmit() {
+    console.log("submit");
+    setModalOpen(false);
   }
 
   return (
     <>
-      <Button variant="contained" onClick={handleNewProposalClick}>
+      <Button variant="outlined" onClick={handleNewProposalClick}>
         <AddIcon/> New Proposal
       </Button>
-      <Modal open={newProposalModalOpen} onClose={handleNewProposalModalClose}>
-        <Box sx={modalStyle}>
-          <Stack>
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-              New Proposal
-            </Typography>
-            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-              Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
-            </Typography>
-          </Stack>
-        </Box>
-      </Modal>
+      <Dialog open={modalOpen} onClose={handleClose}>
+        <DialogTitle>New Proposal</DialogTitle>
+        <DialogContent>
+          <Box component="form" sx={{ display: 'flex', flexWrap: 'wrap' }}>
+            <FormControl sx={{ m: 1, minWidth: 120 }}>
+              <InputLabel>Proposal type</InputLabel>
+              <Select value={proposalType} onChange={handleProposalTypeChange}>
+                {
+                  Object.keys(ProposalType).filter(v => isNaN(Number(v))).map((key, index) => {
+                    return <MenuItem key={index} value={index}>{key}</MenuItem>;
+                  })
+                }
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit}>Submit</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
