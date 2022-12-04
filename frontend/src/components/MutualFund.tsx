@@ -1,6 +1,6 @@
 import { useWeb3React } from "@web3-react/core";
 import { Contract, ethers, Signer } from "ethers";
-import { ReactElement, ReactNode, useEffect, useState } from "react";
+import { ChangeEvent, ReactElement, ReactNode, useEffect, useState } from "react";
 import MutualFundArtifact from "../contracts/MutualFund.sol/MutualFund.json"
 import { Provider } from "../utils/provider";
 import Tabs from "@mui/material/Tabs";
@@ -20,7 +20,7 @@ import {
   DialogContent,
   FormControl,
   DialogActions,
-  InputLabel
+  InputLabel, TextField
 } from "@mui/material";
 
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
@@ -162,6 +162,8 @@ function Proposals(props: ProposalsProps): ReactElement {
 function NewProposal(): ReactElement {
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [proposalType, setProposalType] = useState<ProposalType>();
+  const [amount, setAmount] = useState<string>();
+  const [address, setAddress] = useState<string>();
 
   function handleNewProposalClick() {
     setModalOpen(true);
@@ -173,6 +175,14 @@ function NewProposal(): ReactElement {
 
   function handleProposalTypeChange(event: SelectChangeEvent<number>) {
     setProposalType(toProposalType(Number(event.target.value)));
+  }
+
+  function handleAmountChange(event: ChangeEvent<HTMLInputElement>) {
+    setAmount(event.target.value);
+  }
+
+  function handleAddressChange(event: ChangeEvent<HTMLInputElement>) {
+    setAddress(event.target.value);
   }
 
   function handleSubmit() {
@@ -198,6 +208,8 @@ function NewProposal(): ReactElement {
                   })
                 }
               </Select>
+              <TextField label="Amount" value={amount} onChange={handleAmountChange} />
+              <TextField label="Address" value={address} onChange={handleAddressChange} />
             </FormControl>
           </Box>
         </DialogContent>
