@@ -171,7 +171,7 @@ interface NewProposalProps {
 
 function NewProposal(props: NewProposalProps): ReactElement {
   const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const [proposalType, setProposalType] = useState<ProposalType>();
+  const [proposalType, setProposalType] = useState<ProposalType>(0);
   const [amount, setAmount] = useState<string>();
   const [address, setAddress] = useState<string>();
 
@@ -218,7 +218,7 @@ function NewProposal(props: NewProposalProps): ReactElement {
           <Box component="form" sx={{ display: 'flex', flexWrap: 'wrap' }}>
             <FormControl sx={{ m: 1, minWidth: 120 }}>
               <InputLabel>Proposal type</InputLabel>
-              <Select value={proposalType} onChange={handleProposalTypeChange}>
+              <Select defaultValue={0} value={proposalType} onChange={handleProposalTypeChange}>
                 {
                   Object.keys(ProposalType).filter(v => isNaN(Number(v))).map((key, index) => {
                     return <MenuItem key={index} value={index}>{key}</MenuItem>;
