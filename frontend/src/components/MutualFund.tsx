@@ -199,7 +199,7 @@ function NewProposal(props: NewProposalProps): ReactElement {
   function handleSubmit() {
     setModalOpen(false);
 
-    if (proposalType != undefined) {
+    if (proposalType !== undefined) {
       props.onSubmit({
         proposalType,
         amount,
@@ -292,16 +292,22 @@ export function MutualFund(): ReactElement {
   const [members, setMembers] = useState<MemberModel[]>([]);
   const [proposals, setProposals] = useState<ProposalModel[]>([]);
 
-  useEffect((): void => {
+  useEffect(() => {
     if (!library) {
-      setSigner(undefined);
+      if (signer) {
+        setSigner(undefined);
+      }
+
       return;
     }
 
-    const signer = library.getSigner();
+    setSigner(library.getSigner());
+  }, [library]);
 
-    setSigner(signer);
-    const loadData = async () => {
+  useEffect(() => {
+    if (!signer) return;
+
+    async function loadContract() {
       const MutualFundContract = new ethers.ContractFactory(
         MutualFundArtifact.abi,
         MutualFundArtifact.bytecode,
@@ -310,18 +316,27 @@ export function MutualFund(): ReactElement {
 
       const mutualFundContract = await MutualFundContract.attach(contractAddress);
 
-      const totalBalance = await mutualFundContract.getTotalBalance();
-
       setContract(mutualFundContract);
+    }
+
+    loadContract().catch(console.error);
+  }, [signer]);
+
+  useEffect(() => {
+    if (!contract) return;
+
+    const loadData = async () => {
+      const totalBalance = await contract.getTotalBalance();
+
       setTotalBalance(totalBalance.toString());
 
       await Promise.all([
-        mutualFundContract.getMembers().then((members: any) => {
+        contract.getMembers().then((members: any) => {
           console.log("members =", members);
 
           setMembers(members);
         }),
-        mutualFundContract.getProposals().then((proposals: any) => {
+        contract.getProposals().then((proposals: any) => {
           console.log("proposals =", proposals);
 
           setProposals(proposals);
@@ -330,7 +345,7 @@ export function MutualFund(): ReactElement {
     };
 
     loadData().catch(console.error);
-  }, [library]);
+  }, [contract]);
 
   function handleTabChange(event: SyntheticEvent, newValue: number) {
     setTabIndex(newValue);
