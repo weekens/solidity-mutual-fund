@@ -210,6 +210,10 @@ function NewProposal(props: NewProposalProps): ReactElement {
     reset();
   }
 
+  function canSubmit(): boolean {
+    return proposalType !== undefined && ethers.utils.isAddress(address) && parseFloat(amount) > 0;
+  }
+
   function reset() {
     setProposalType(ProposalType.DepositFunds);
     setAmount("");
@@ -234,14 +238,24 @@ function NewProposal(props: NewProposalProps): ReactElement {
                   })
                 }
               </Select>
-              <TextField label="Amount" value={amount} onChange={handleAmountChange} />
-              <TextField label="Address" value={address} onChange={handleAddressChange} />
+              <TextField
+                label="Amount"
+                value={amount}
+                onChange={handleAmountChange}
+                error={!(parseFloat(amount) > 0)}
+              />
+              <TextField
+                label="Address"
+                value={address}
+                onChange={handleAddressChange}
+                error={!ethers.utils.isAddress(address)}
+              />
             </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit} disabled={proposalType === undefined}>Submit</Button>
+          <Button variant="contained" onClick={handleSubmit} disabled={!canSubmit()}>Submit</Button>
         </DialogActions>
       </Dialog>
     </>
