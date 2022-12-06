@@ -210,8 +210,17 @@ function NewProposal(props: NewProposalProps): ReactElement {
     reset();
   }
 
+  function isValidEtherAmount(amount: string): boolean {
+    try {
+      ethers.utils.parseEther(amount);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   function canSubmit(): boolean {
-    return proposalType !== undefined && ethers.utils.isAddress(address) && parseFloat(amount) > 0;
+    return proposalType !== undefined && ethers.utils.isAddress(address) && isValidEtherAmount(amount);
   }
 
   function reset() {
@@ -242,7 +251,7 @@ function NewProposal(props: NewProposalProps): ReactElement {
                 label="Amount"
                 value={amount}
                 onChange={handleAmountChange}
-                error={!(parseFloat(amount) > 0)}
+                error={!isValidEtherAmount(amount)}
               />
               <TextField
                 label="Address"
@@ -330,8 +339,8 @@ export function MutualFund(): ReactElement {
 
       const mutualFundContract = await MutualFundContract.attach(contractAddress);
 
-      mutualFundContract.on("NewProposal", event => {
-        console.log(">> NewProposal event!", event);
+      mutualFundContract.on("NewProposal", (id, author) => {
+        console.log(">> NewProposal event! id =", id, ", author =", author);
       });
 
       setContract(mutualFundContract);
@@ -386,6 +395,8 @@ export function MutualFund(): ReactElement {
     });
 
     await proposalTxn.wait();
+
+    console.log("Proposal successfully submitted");
   }
 
   return (
