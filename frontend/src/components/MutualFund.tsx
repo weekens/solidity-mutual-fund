@@ -172,8 +172,8 @@ interface NewProposalProps {
 function NewProposal(props: NewProposalProps): ReactElement {
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [proposalType, setProposalType] = useState<ProposalType>(0);
-  const [amount, setAmount] = useState<string>();
-  const [address, setAddress] = useState<string>();
+  const [amount, setAmount] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
 
   function handleNewProposalClick() {
     setModalOpen(true);
