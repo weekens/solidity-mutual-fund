@@ -181,6 +181,7 @@ function NewProposal(props: NewProposalProps): ReactElement {
 
   function handleClose() {
     setModalOpen(false);
+    reset();
   }
 
   function handleProposalTypeChange(event: SelectChangeEvent<number>) {
@@ -205,6 +206,14 @@ function NewProposal(props: NewProposalProps): ReactElement {
         address
       });
     }
+
+    reset();
+  }
+
+  function reset() {
+    setProposalType(ProposalType.DepositFunds);
+    setAmount("");
+    setAddress("");
   }
 
   return (
