@@ -316,6 +316,10 @@ export function MutualFund(): ReactElement {
 
       const mutualFundContract = await MutualFundContract.attach(contractAddress);
 
+      mutualFundContract.on("NewProposal", event => {
+        console.log(">> NewProposal event!", event);
+      });
+
       setContract(mutualFundContract);
     }
 
@@ -351,8 +355,23 @@ export function MutualFund(): ReactElement {
     setTabIndex(newValue);
   }
 
-  function handleNewProposalSubmit(event: NewProposalSubmitEvent) {
+  async function handleNewProposalSubmit(event: NewProposalSubmitEvent) {
     console.log("new proposal, ", event);
+
+    if (!contract) throw new Error("Contract not loaded");
+
+    const amount = event.amount;
+    const address = event.address;
+
+    if (!amount || !address) return;
+
+    const proposalTxn = await contract.submitProposal({
+      proposalType: event.proposalType.valueOf(),
+      amount: ethers.utils.parseEther(amount),
+      addresses: [ethers.utils.getAddress(address)]
+    });
+
+    await proposalTxn.wait();
   }
 
   return (
