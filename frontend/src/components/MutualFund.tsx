@@ -1,275 +1,21 @@
 import { useWeb3React } from "@web3-react/core";
-import { BigNumber, Contract, ethers, Signer } from "ethers";
-import { ChangeEvent, ReactElement, ReactNode, SyntheticEvent, useEffect, useState } from "react";
+import { Contract, ethers, Signer } from "ethers";
+import { ReactElement, ReactNode, SyntheticEvent, useEffect, useState } from "react";
 import MutualFundArtifact from "../contracts/MutualFund.sol/MutualFund.json"
 import { Provider } from "../utils/provider";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
-import AddIcon from '@mui/icons-material/Add';
-import {
-  Select,
-  SelectChangeEvent,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  FormControl,
-  DialogActions,
-  InputLabel, TextField
-} from "@mui/material";
+import { MemberModel } from "../models/MemberModel";
+import { Member } from "./Member";
+import { AccountInfo } from "./AccountInfo";
+import { ProposalModel } from "../models/ProposalModel";
+import { ProposalList } from "./ProposalList";
+import { NewProposal, NewProposalSubmitEvent } from "./NewProposal";
 
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
-
-interface MemberModel {
-  addr: string;
-  balance: number;
-}
-
-function Member(props: MemberModel): ReactElement {
-  return (
-    <Grid container>
-      <Grid item xs={6}>
-        Address:
-      </Grid>
-      <Grid item xs={6}>
-        {props.addr}
-      </Grid>
-      <Grid item xs={6}>
-        Balance:
-      </Grid>
-      <Grid item xs={6}>
-        {props.balance.toString()}
-      </Grid>
-    </Grid>
-  );
-}
-
-interface AccountInfoProps {
-  totalBalance: string;
-}
-
-function AccountInfo(props: AccountInfoProps): ReactElement {
-  return (
-    <Grid container>
-      <Grid item xs={6}>
-        Total balance:
-      </Grid>
-      <Grid item xs={6}>
-        {props.totalBalance}
-      </Grid>
-    </Grid>
-  );
-}
-
-enum ProposalType {
-  DepositFunds,
-  AddAsset,
-  Swap,
-  AddMember,
-  KickMember,
-  ChangeVotingPeriod,
-  ChangeGracePeriod
-}
-
-function toProposalType(t: number): ProposalType {
-  switch (t) {
-    case 0:
-      return ProposalType.DepositFunds;
-    case 1:
-      return ProposalType.AddAsset;
-    case 2:
-      return ProposalType.Swap;
-    case 3:
-      return ProposalType.AddMember;
-    case 4:
-      return ProposalType.KickMember;
-    case 5:
-      return ProposalType.ChangeVotingPeriod;
-    case 6:
-      return ProposalType.ChangeGracePeriod;
-    default:
-      throw new Error("Unknown proposal type");
-  }
-}
-
-interface ProposalRequestModel {
-  proposalType: ProposalType;
-  amount: string;
-  addresses: string[];
-}
-
-interface VoteModel {
-  memberAddress: string;
-  support: boolean;
-}
-
-interface ProposalModel {
-  id: string;
-  createdAt: BigNumber;
-  author: string;
-  request: ProposalRequestModel;
-  votes: VoteModel[];
-}
-
-interface ProposalsProps {
-  proposals: ProposalModel[];
-}
-
-function Proposal(props: ProposalModel): ReactElement {
-  return (
-    <Grid container>
-      <Grid item xs={6}>
-        Author:
-      </Grid>
-      <Grid item xs={6}>
-        {props.author}
-      </Grid>
-      <Grid item xs={6}>
-        Created at:
-      </Grid>
-      <Grid item xs={6}>
-        {props.createdAt.toString()}
-      </Grid>
-      <Grid item xs={6}>
-        Type:
-      </Grid>
-      <Grid item xs={6}>
-        {props.request.proposalType}
-      </Grid>
-    </Grid>
-  );
-}
-
-function Proposals(props: ProposalsProps): ReactElement {
-  return (
-    <Stack>
-    {
-      props.proposals.map(proposal => {
-        return (
-          <Proposal key={proposal.id} {...proposal}></Proposal>
-        );
-      })
-    }
-    </Stack>
-  );
-}
-
-interface NewProposalSubmitEvent {
-  proposalType: ProposalType;
-  amount?: string;
-  address?: string;
-}
-
-interface NewProposalProps {
-  onSubmit: (event: NewProposalSubmitEvent) => void;
-}
-
-function NewProposal(props: NewProposalProps): ReactElement {
-  const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const [proposalType, setProposalType] = useState<ProposalType>(0);
-  const [amount, setAmount] = useState<string>("");
-  const [address, setAddress] = useState<string>("");
-
-  function handleNewProposalClick() {
-    setModalOpen(true);
-  }
-
-  function handleClose() {
-    setModalOpen(false);
-    reset();
-  }
-
-  function handleProposalTypeChange(event: SelectChangeEvent<number>) {
-    setProposalType(toProposalType(Number(event.target.value)));
-  }
-
-  function handleAmountChange(event: ChangeEvent<HTMLInputElement>) {
-    setAmount(event.target.value);
-  }
-
-  function handleAddressChange(event: ChangeEvent<HTMLInputElement>) {
-    setAddress(event.target.value);
-  }
-
-  function handleSubmit() {
-    setModalOpen(false);
-
-    if (proposalType !== undefined) {
-      props.onSubmit({
-        proposalType,
-        amount,
-        address
-      });
-    }
-
-    reset();
-  }
-
-  function isValidEtherAmount(amount: string): boolean {
-    try {
-      ethers.utils.parseEther(amount);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function canSubmit(): boolean {
-    return proposalType !== undefined && ethers.utils.isAddress(address) && isValidEtherAmount(amount);
-  }
-
-  function reset() {
-    setProposalType(ProposalType.DepositFunds);
-    setAmount("");
-    setAddress("");
-  }
-
-  return (
-    <>
-      <Button variant="outlined" onClick={handleNewProposalClick}>
-        <AddIcon/> New Proposal
-      </Button>
-      <Dialog open={modalOpen} onClose={handleClose}>
-        <DialogTitle>New Proposal</DialogTitle>
-        <DialogContent>
-          <Box component="form" sx={{ display: 'flex', flexWrap: 'wrap' }}>
-            <FormControl sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel>Proposal type</InputLabel>
-              <Select defaultValue={0} value={proposalType} onChange={handleProposalTypeChange}>
-                {
-                  Object.keys(ProposalType).filter(v => isNaN(Number(v))).map((key, index) => {
-                    return <MenuItem key={index} value={index}>{key}</MenuItem>;
-                  })
-                }
-              </Select>
-              <TextField
-                label="Amount"
-                value={amount}
-                onChange={handleAmountChange}
-                error={!isValidEtherAmount(amount)}
-              />
-              <TextField
-                label="Address"
-                value={address}
-                onChange={handleAddressChange}
-                error={!ethers.utils.isAddress(address)}
-              />
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit} disabled={!canSubmit()}>Submit</Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  );
-}
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -306,7 +52,7 @@ function tabProps(index: number) {
 
 export function MutualFund(): ReactElement {
   const context = useWeb3React<Provider>();
-  const { library, active } = context;
+  const { library } = context; // { library, active } could also be used.
 
   const [signer, setSigner] = useState<Signer>();
   const [contract, setContract] = useState<Contract>();
@@ -425,7 +171,7 @@ export function MutualFund(): ReactElement {
       <TabPanel index={tabIndex} value={2}>
         <Stack>
           <NewProposal onSubmit={handleNewProposalSubmit} />
-          <Proposals proposals={proposals}/>
+          <ProposalList proposals={proposals}/>
         </Stack>
       </TabPanel>
     </Box>
