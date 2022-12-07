@@ -1,5 +1,5 @@
 import { useWeb3React } from "@web3-react/core";
-import { Contract, ethers, Signer } from "ethers";
+import { BigNumber, Contract, ethers, Signer } from "ethers";
 import { ChangeEvent, ReactElement, ReactNode, SyntheticEvent, useEffect, useState } from "react";
 import MutualFundArtifact from "../contracts/MutualFund.sol/MutualFund.json"
 import { Provider } from "../utils/provider";
@@ -110,7 +110,7 @@ interface VoteModel {
 
 interface ProposalModel {
   id: string;
-  createdAt: string;
+  createdAt: BigNumber;
   author: string;
   request: ProposalRequestModel;
   votes: VoteModel[];
@@ -133,7 +133,7 @@ function Proposal(props: ProposalModel): ReactElement {
         Created at:
       </Grid>
       <Grid item xs={6}>
-        {props.createdAt}
+        {props.createdAt.toString()}
       </Grid>
       <Grid item xs={6}>
         Type:
