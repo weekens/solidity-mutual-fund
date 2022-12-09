@@ -44,6 +44,7 @@ export function Proposal(props: ProposalModel): ReactElement {
                   <TableHead>
                     <TableRow>
                       <TableCell>Voter</TableCell>
+                      <TableCell>Supports?</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -51,6 +52,9 @@ export function Proposal(props: ProposalModel): ReactElement {
                       <TableRow key={vote.memberAddress}>
                         <TableCell component="th" scope="row">
                           {vote.memberAddress}
+                        </TableCell>
+                        <TableCell component="th" scope="row">
+                          {vote.support.toString()}
                         </TableCell>
                       </TableRow>
                     ))}
