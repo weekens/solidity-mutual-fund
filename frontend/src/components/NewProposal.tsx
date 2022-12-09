@@ -87,7 +87,7 @@ export function NewProposal(props: NewProposalProps): ReactElement {
 
   return (
     <>
-      <Button variant="outlined" onClick={handleNewProposalClick}>
+      <Button variant="outlined" onClick={handleNewProposalClick} sx={{ marginBottom: "15px" }}>
         <AddIcon/> New Proposal
       </Button>
       <Dialog open={modalOpen} onClose={handleClose}>
