@@ -8,12 +8,15 @@ import {
   AccordionSummary,
   AccordionDetails,
   TableContainer,
-  Paper, TableCell, TableHead, TableRow, TableBody, Table
+  Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip
 } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { BlockTimestamp } from "./BlockTimestamp";
 
 export function Proposal(props: ProposalModel): ReactElement {
+  const yesVotes = props.votes.filter(v => v.support);
+  const noVotes = props.votes.filter(v => !v.support);
+
   return (
     <Card>
       <CardContent>
@@ -38,7 +41,24 @@ export function Proposal(props: ProposalModel): ReactElement {
           </Grid>
 
           <Accordion sx={{ width: "100%", marginTop: "15px" }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>Votes</AccordionSummary>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <span>Votes</span>
+              <Chip size="small" label={"Total: " + props.votes.length} sx={{ marginLeft: "15px" }}></Chip>
+              {
+                (yesVotes.length > 0)
+                  ?
+                  <Chip size="small" label={"Yes: " + props.votes.filter(v => v.support).length} color="success"></Chip>
+                  :
+                  (<></>)
+              }
+              {
+                (noVotes.length > 0)
+                  ?
+                  <Chip size="small" label={"No: " + props.votes.filter(v => !v.support).length} color="error"></Chip>
+                  :
+                  (<></>)
+              }
+            </AccordionSummary>
             <AccordionDetails>
               <TableContainer component={Paper}>
                 <Table aria-label="simple table">
