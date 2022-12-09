@@ -11,6 +11,7 @@ import {
   Paper, TableCell, TableHead, TableRow, TableBody, Table
 } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { BlockTimestamp } from "./BlockTimestamp";
 
 export function Proposal(props: ProposalModel): ReactElement {
   return (
@@ -27,7 +28,7 @@ export function Proposal(props: ProposalModel): ReactElement {
             Created at:
           </Grid>
           <Grid item xs={6}>
-            {props.createdAt.toString()}
+            <BlockTimestamp data={props.createdAt} />
           </Grid>
           <Grid item xs={6}>
             Type:
