@@ -11,6 +11,8 @@ import {
   Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip
 } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
+import ThumbDownAltIcon from '@mui/icons-material/ThumbDownAlt';
 import { BlockTimestamp } from "./BlockTimestamp";
 
 export function Proposal(props: ProposalModel): ReactElement {
@@ -43,18 +45,18 @@ export function Proposal(props: ProposalModel): ReactElement {
           <Accordion sx={{ width: "100%", marginTop: "15px" }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <span>Votes</span>
-              <Chip size="small" label={"Total: " + props.votes.length} sx={{ marginLeft: "15px" }}></Chip>
+              <Chip size="small" label={"Total: " + props.votes.length} sx={{ marginLeft: "15px" }}/>
               {
                 (yesVotes.length > 0)
                   ?
-                  <Chip size="small" label={"Yes: " + props.votes.filter(v => v.support).length} color="success"></Chip>
+                  <Chip size="small" label={"Yes: " + props.votes.filter(v => v.support).length} color="success"/>
                   :
                   (<></>)
               }
               {
                 (noVotes.length > 0)
                   ?
-                  <Chip size="small" label={"No: " + props.votes.filter(v => !v.support).length} color="error"></Chip>
+                  <Chip size="small" label={"No: " + props.votes.filter(v => !v.support).length} color="error"/>
                   :
                   (<></>)
               }
@@ -75,7 +77,13 @@ export function Proposal(props: ProposalModel): ReactElement {
                           {vote.memberAddress}
                         </TableCell>
                         <TableCell component="th" scope="row">
-                          {vote.support.toString()}
+                          {
+                            vote.support
+                            ?
+                            <Chip icon={<ThumbUpAltIcon/>} color="success" label="Yes"/>
+                            :
+                            <Chip icon={<ThumbDownAltIcon/>} color="error" label="No"/>
+                          }
                         </TableCell>
                       </TableRow>
                     ))}
