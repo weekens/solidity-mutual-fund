@@ -1,5 +1,6 @@
 import { ProposalModel } from "../models/ProposalModel";
 import { ReactElement } from "react";
+import { styled } from "@mui/material/styles";
 import {
   Grid,
   Card,
@@ -8,12 +9,19 @@ import {
   AccordionSummary,
   AccordionDetails,
   TableContainer,
-  Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip
+  Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip, tableCellClasses
 } from "@mui/material";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
-import ThumbDownAltIcon from '@mui/icons-material/ThumbDownAlt';
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
+import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import { BlockTimestamp } from "./BlockTimestamp";
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.common.black,
+    color: theme.palette.common.white,
+  }
+}));
 
 export function Proposal(props: ProposalModel): ReactElement {
   const yesVotes = props.votes.filter(v => v.support);
@@ -66,8 +74,8 @@ export function Proposal(props: ProposalModel): ReactElement {
                 <Table aria-label="simple table">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Voter</TableCell>
-                      <TableCell>Supports?</TableCell>
+                      <StyledTableCell>Voter</StyledTableCell>
+                      <StyledTableCell>Supports?</StyledTableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
