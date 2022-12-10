@@ -130,7 +130,7 @@ contract MutualFund {
 
     function executeProposal(uint proposalId) membersOnly payable public {
         (Proposal storage proposal,) = findProposalById(proposalId);
-        checkCanExecuteProposal(msg.sender, proposal);
+        checkCanExecuteProposal(proposal);
         ProposalType proposalType = proposal.request.proposalType;
 
         if (proposalType == ProposalType.DepositFunds) {
@@ -381,9 +381,20 @@ contract MutualFund {
         revert("Asset not found");
     }
 
-    function checkCanExecuteProposal(address memberAddress, Proposal storage proposal) private view {
-        require(proposal.author == memberAddress, "Executor is not a proposal author");
-        require(proposal.createdAt + configuration.proposalExpiryPeriod > block.timestamp, "Proposal has expired");
+    function checkCanExecuteProposal(Proposal storage proposal) private view {
+        (bool result, string memory message) = canExecuteProposal(proposal);
+
+        require(result, message);
+    }
+
+    function canExecuteProposal(Proposal storage proposal) private view returns (bool, string memory) {
+        address memberAddress = msg.sender;
+
+        if (proposal.author != memberAddress)
+            return (false, "Executor is not a proposal author");
+
+        if (proposal.createdAt + configuration.proposalExpiryPeriod <= block.timestamp)
+            return (false, "Proposal has expired");
 
         uint supportBalance = 0;
         uint noSupportBalance = 0;
@@ -405,26 +416,32 @@ contract MutualFund {
         if (membersLength == 1) {
             // Allow zero votes or vote ties when we have only one member.
             // This is to save on gas when we need to do initial housekeeping.
-            require(supportBalance >= noSupportBalance, "Proposal was rejected by voting");
+            if (supportBalance < noSupportBalance)
+                return (false, "Proposal was rejected by voting");
         }
         else {
             if (votesLength == membersLength) {
                 if (noSupportBalance > 0) {
-                    require(
-                        block.timestamp > proposal.createdAt + configuration.votingPeriod + configuration.gracePeriod,
-                        "Grace period is in progress"
-                    );
+                    if (block.timestamp <= proposal.createdAt + configuration.votingPeriod + configuration.gracePeriod)
+                        return (false, "Grace period is in progress");
                 }
             }
             else {
-                require(
-                    block.timestamp > proposal.createdAt + configuration.votingPeriod + configuration.gracePeriod,
-                    "Voting or grace period is in progress"
-                );
+                if (block.timestamp <= proposal.createdAt + configuration.votingPeriod + configuration.gracePeriod)
+                    return (false, "Voting or grace period is in progress");
             }
 
-            require(supportBalance > noSupportBalance, "Proposal was rejected by voting");
+            if (supportBalance <= noSupportBalance)
+                return (false, "Proposal was rejected by voting");
         }
+
+        return (true, "");
+    }
+
+    function canExecuteProposal(uint proposalId) public view returns (bool, string memory) {
+        (Proposal storage proposal,) = findProposalById(proposalId);
+
+        return canExecuteProposal(proposal);
     }
 
     function checkMemberCanVote(address memberAddress, Proposal storage proposal) private view {
