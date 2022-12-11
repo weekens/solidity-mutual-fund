@@ -1,5 +1,5 @@
 import { ProposalModel } from "../models/ProposalModel";
-import { ReactElement } from "react";
+import { ReactElement, useEffect, useState } from "react";
 import { styled } from "@mui/material/styles";
 import {
   Grid,
@@ -16,6 +16,7 @@ import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import BoltIcon from '@mui/icons-material/Bolt';
 import { BlockTimestamp } from "./BlockTimestamp";
+import { MutualFundContract } from "../MutualFundContract";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -26,12 +27,41 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 
 export interface ProposalProps {
   model: ProposalModel;
-  canExecute: boolean;
+  contract: MutualFundContract;
 }
 
 export function Proposal(props: ProposalProps): ReactElement {
   const yesVotes = props.model.votes.filter(v => v.support);
   const noVotes = props.model.votes.filter(v => !v.support);
+
+  const [canExecute, setCanExecute] = useState<boolean>(false);
+  const [canNotExecuteReason, setCanNotExecuteReason] = useState<string>("");
+
+  useEffect(() => {
+    props
+      .contract
+      .canExecuteProposal(props.model.id)
+      .then(response => {
+        setCanExecute(response[0]);
+        setCanNotExecuteReason(response[1]);
+      })
+      .catch(console.error)
+  })
+
+  async function handleExecuteProposalClick() {
+    if (!canExecute) {
+      console.warn("Cannot execute proposal:", canNotExecuteReason);
+      return;
+    }
+
+    console.info("Executing proposal:", props.model.id);
+
+    const proposalTxn = await props.contract.executeProposal(props.model.id);
+
+    await proposalTxn.wait();
+
+    console.info("Proposal successfully executed");
+  }
 
   return (
     <Card>
@@ -55,6 +85,12 @@ export function Proposal(props: ProposalProps): ReactElement {
             </Grid>
             <Grid item xs={6}>
               {props.model.request.proposalType}
+            </Grid>
+            <Grid item xs={6}>
+              Amount:
+            </Grid>
+            <Grid item xs={6}>
+              {props.model.request.amount.toString()}
             </Grid>
           </Grid>
           <Accordion sx={{ width: "100%" }}>
@@ -108,11 +144,11 @@ export function Proposal(props: ProposalProps): ReactElement {
             </AccordionDetails>
           </Accordion>
           {
-            props.canExecute
+            canExecute
             ?
             <Grid container justifyContent="flex-end">
               <Grid item xs={3}>
-                <Button variant="contained" fullWidth={true}>
+                <Button variant="contained" fullWidth={true} onClick={handleExecuteProposalClick}>
                   <BoltIcon sx={{ color: "#f5f500" }} /> Execute proposal
                 </Button>
               </Grid>
