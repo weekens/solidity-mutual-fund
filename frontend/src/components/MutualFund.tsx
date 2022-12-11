@@ -60,6 +60,7 @@ export function MutualFund(): ReactElement {
   const [tabIndex, setTabIndex] = useState<number>(0);
   const [totalBalance, setTotalBalance] = useState<BigNumber>(BigNumber.from(0));
   const [members, setMembers] = useState<MemberModel[]>([]);
+  const [selfMember, setSelfMember] = useState<MemberModel>();
   const [proposals, setProposals] = useState<ProposalModel[]>([]);
 
   useEffect(() => {
@@ -125,6 +126,18 @@ export function MutualFund(): ReactElement {
     loadData().catch(console.error);
   }, [contract]);
 
+  useEffect(() => {
+    async function loadSelfMember() {
+      if (!signer) return;
+
+      const selfAddress = await signer.getAddress();
+      const selfMember = members.find(m => m.addr === selfAddress);
+      setSelfMember(selfMember);
+    }
+
+    loadSelfMember().catch(console.error);
+  }, [signer, members]);
+
   function handleTabChange(event: SyntheticEvent, newValue: number) {
     setTabIndex(newValue);
   }
@@ -153,6 +166,9 @@ export function MutualFund(): ReactElement {
   if (!contract)
     return (<></>);
 
+  if (!selfMember)
+    return (<></>);
+
   return (
     <Box sx={{ width: "100%" }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -163,7 +179,7 @@ export function MutualFund(): ReactElement {
         </Tabs>
       </Box>
       <TabPanel value={tabIndex} index={0}>
-        <AccountInfo totalBalance={totalBalance}/>
+        <AccountInfo totalBalance={totalBalance} member={selfMember}/>
       </TabPanel>
       <TabPanel value={tabIndex} index={1}>
         <Stack>

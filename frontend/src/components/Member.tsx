@@ -1,6 +1,7 @@
 import { MemberModel } from "../models/MemberModel";
 import { ReactElement } from "react";
 import Grid from "@mui/material/Grid";
+import { ethers } from "ethers";
 
 export function Member(props: MemberModel): ReactElement {
   return (
@@ -15,7 +16,7 @@ export function Member(props: MemberModel): ReactElement {
         Balance:
       </Grid>
       <Grid item xs={6}>
-        {props.balance.toString()}
+        {ethers.utils.formatEther(props.balance)} ETH
       </Grid>
     </Grid>
   );

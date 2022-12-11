@@ -1,4 +1,6 @@
+import { BigNumber } from "ethers";
+
 export interface MemberModel {
   addr: string;
-  balance: number;
+  balance: BigNumber;
 }
