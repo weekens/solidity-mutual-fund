@@ -9,11 +9,12 @@ import {
   AccordionSummary,
   AccordionDetails,
   TableContainer,
-  Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip, tableCellClasses, Button
+  Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip, tableCellClasses, Button, Stack
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
+import BoltIcon from '@mui/icons-material/Bolt';
 import { BlockTimestamp } from "./BlockTimestamp";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -35,27 +36,28 @@ export function Proposal(props: ProposalProps): ReactElement {
   return (
     <Card>
       <CardContent>
-        <Grid container>
-          <Grid item xs={6}>
-            Author:
+        <Stack gap="15px">
+          <Grid container>
+            <Grid item xs={6}>
+              Author:
+            </Grid>
+            <Grid item xs={6}>
+              {props.model.author}
+            </Grid>
+            <Grid item xs={6}>
+              Created at:
+            </Grid>
+            <Grid item xs={6}>
+              <BlockTimestamp data={props.model.createdAt} />
+            </Grid>
+            <Grid item xs={6}>
+              Type:
+            </Grid>
+            <Grid item xs={6}>
+              {props.model.request.proposalType}
+            </Grid>
           </Grid>
-          <Grid item xs={6}>
-            {props.model.author}
-          </Grid>
-          <Grid item xs={6}>
-            Created at:
-          </Grid>
-          <Grid item xs={6}>
-            <BlockTimestamp data={props.model.createdAt} />
-          </Grid>
-          <Grid item xs={6}>
-            Type:
-          </Grid>
-          <Grid item xs={6}>
-            {props.model.request.proposalType}
-          </Grid>
-
-          <Accordion sx={{ width: "100%", marginTop: "15px" }}>
+          <Accordion sx={{ width: "100%" }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <span>Votes</span>
               <Chip size="small" label={"Total: " + props.model.votes.length} sx={{ marginLeft: "15px" }}/>
@@ -92,10 +94,10 @@ export function Proposal(props: ProposalProps): ReactElement {
                         <TableCell component="th" scope="row">
                           {
                             vote.support
-                            ?
-                            <Chip icon={<ThumbUpAltIcon/>} color="success" label="Yes"/>
-                            :
-                            <Chip icon={<ThumbDownAltIcon/>} color="error" label="No"/>
+                              ?
+                              <Chip icon={<ThumbUpAltIcon/>} color="success" label="Yes"/>
+                              :
+                              <Chip icon={<ThumbDownAltIcon/>} color="error" label="No"/>
                           }
                         </TableCell>
                       </TableRow>
@@ -105,14 +107,20 @@ export function Proposal(props: ProposalProps): ReactElement {
               </TableContainer>
             </AccordionDetails>
           </Accordion>
-        </Grid>
-        {
-          props.canExecute
-          ?
-          <Button>Execute proposal</Button>
-          :
-          (<></>)
-        }
+          {
+            props.canExecute
+            ?
+            <Grid container justifyContent="flex-end">
+              <Grid item xs={3}>
+                <Button variant="contained" fullWidth={true}>
+                  <BoltIcon sx={{ color: "#f5f500" }} /> Execute proposal
+                </Button>
+              </Grid>
+            </Grid>
+            :
+            (<></>)
+          }
+        </Stack>
       </CardContent>
     </Card>
   );
