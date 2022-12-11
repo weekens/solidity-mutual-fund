@@ -14,6 +14,7 @@ import { AccountInfo } from "./AccountInfo";
 import { ProposalModel } from "../models/ProposalModel";
 import { ProposalList } from "./ProposalList";
 import { NewProposal, NewProposalSubmitEvent } from "./NewProposal";
+import _ from "lodash";
 
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
 
@@ -60,6 +61,7 @@ export function MutualFund(): ReactElement {
   const [totalBalance, setTotalBalance] = useState<string>("");
   const [members, setMembers] = useState<MemberModel[]>([]);
   const [proposals, setProposals] = useState<ProposalModel[]>([]);
+  const [canExecuteMap, setCanExecuteMap] = useState<{ [id: string]: boolean }>({});
 
   useEffect(() => {
     if (!library) {
@@ -104,15 +106,29 @@ export function MutualFund(): ReactElement {
       setTotalBalance(totalBalance.toString());
 
       await Promise.all([
-        contract.getMembers().then((members: any) => {
+        contract.getMembers().then((members: MemberModel[]) => {
           console.log("members =", members);
 
           setMembers(members);
         }),
-        contract.getProposals().then((proposals: any) => {
+        contract.getProposals().then(async (proposals: ProposalModel[]) => {
           console.log("proposals =", proposals);
 
           setProposals(proposals);
+
+          const canExecuteList = await Promise.all(proposals.map(async p => {
+            const canExecuteProposalResponse = await contract.canExecuteProposal(p.id);
+            const canExecute = canExecuteProposalResponse[0] as boolean;
+
+            if (!canExecute) {
+              console.warn("Proposal non executable, id =", p.id, ", reason =", canExecuteProposalResponse[1]);
+            }
+
+            return { id: p.id, canExecute };
+          }));
+          const canExecuteMap = _.mapValues(_.groupBy(canExecuteList, i => i.id), v => v[0].canExecute);
+
+          setCanExecuteMap(canExecuteMap);
         })
       ]);
     };
@@ -171,7 +187,7 @@ export function MutualFund(): ReactElement {
       <TabPanel index={tabIndex} value={2}>
         <Stack>
           <NewProposal onSubmit={handleNewProposalSubmit} />
-          <ProposalList proposals={proposals}/>
+          <ProposalList proposals={proposals} canExecuteMap={canExecuteMap} />
         </Stack>
       </TabPanel>
     </Box>

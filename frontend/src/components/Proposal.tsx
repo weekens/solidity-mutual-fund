@@ -9,7 +9,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   TableContainer,
-  Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip, tableCellClasses
+  Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip, tableCellClasses, Button
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
@@ -23,9 +23,14 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   }
 }));
 
-export function Proposal(props: ProposalModel): ReactElement {
-  const yesVotes = props.votes.filter(v => v.support);
-  const noVotes = props.votes.filter(v => !v.support);
+export interface ProposalProps {
+  model: ProposalModel;
+  canExecute: boolean;
+}
+
+export function Proposal(props: ProposalProps): ReactElement {
+  const yesVotes = props.model.votes.filter(v => v.support);
+  const noVotes = props.model.votes.filter(v => !v.support);
 
   return (
     <Card>
@@ -35,36 +40,36 @@ export function Proposal(props: ProposalModel): ReactElement {
             Author:
           </Grid>
           <Grid item xs={6}>
-            {props.author}
+            {props.model.author}
           </Grid>
           <Grid item xs={6}>
             Created at:
           </Grid>
           <Grid item xs={6}>
-            <BlockTimestamp data={props.createdAt} />
+            <BlockTimestamp data={props.model.createdAt} />
           </Grid>
           <Grid item xs={6}>
             Type:
           </Grid>
           <Grid item xs={6}>
-            {props.request.proposalType}
+            {props.model.request.proposalType}
           </Grid>
 
           <Accordion sx={{ width: "100%", marginTop: "15px" }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <span>Votes</span>
-              <Chip size="small" label={"Total: " + props.votes.length} sx={{ marginLeft: "15px" }}/>
+              <Chip size="small" label={"Total: " + props.model.votes.length} sx={{ marginLeft: "15px" }}/>
               {
                 (yesVotes.length > 0)
                   ?
-                  <Chip size="small" label={"Yes: " + props.votes.filter(v => v.support).length} color="success"/>
+                  <Chip size="small" label={"Yes: " + props.model.votes.filter(v => v.support).length} color="success"/>
                   :
                   (<></>)
               }
               {
                 (noVotes.length > 0)
                   ?
-                  <Chip size="small" label={"No: " + props.votes.filter(v => !v.support).length} color="error"/>
+                  <Chip size="small" label={"No: " + props.model.votes.filter(v => !v.support).length} color="error"/>
                   :
                   (<></>)
               }
@@ -79,7 +84,7 @@ export function Proposal(props: ProposalModel): ReactElement {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {props.votes.map(vote => (
+                    {props.model.votes.map(vote => (
                       <TableRow key={vote.memberAddress}>
                         <TableCell component="th" scope="row">
                           {vote.memberAddress}
@@ -101,6 +106,13 @@ export function Proposal(props: ProposalModel): ReactElement {
             </AccordionDetails>
           </Accordion>
         </Grid>
+        {
+          props.canExecute
+          ?
+          <Button>Execute proposal</Button>
+          :
+          (<></>)
+        }
       </CardContent>
     </Card>
   );

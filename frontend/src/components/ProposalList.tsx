@@ -5,6 +5,8 @@ import { Proposal } from "./Proposal";
 
 export interface ProposalListProps {
   proposals: ProposalModel[];
+
+  canExecuteMap: { [id: string]: boolean };
 }
 
 export function ProposalList(props: ProposalListProps): ReactElement {
@@ -13,7 +15,7 @@ export function ProposalList(props: ProposalListProps): ReactElement {
       {
         props.proposals.map(proposal => {
           return (
-            <Proposal key={proposal.id} {...proposal}></Proposal>
+            <Proposal key={proposal.id} model={proposal} canExecute={props.canExecuteMap[proposal.id] || false} />
           );
         })
       }
