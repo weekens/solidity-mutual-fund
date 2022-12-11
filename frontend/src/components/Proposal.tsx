@@ -17,6 +17,7 @@ import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import BoltIcon from '@mui/icons-material/Bolt';
 import { BlockTimestamp } from "./BlockTimestamp";
 import { MutualFundContract } from "../MutualFundContract";
+import { ethers } from "ethers";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -90,7 +91,7 @@ export function Proposal(props: ProposalProps): ReactElement {
               Amount:
             </Grid>
             <Grid item xs={6}>
-              {props.model.request.amount.toString()}
+              {ethers.utils.formatEther(props.model.request.amount)} ETH
             </Grid>
           </Grid>
           <Accordion sx={{ width: "100%" }}>
