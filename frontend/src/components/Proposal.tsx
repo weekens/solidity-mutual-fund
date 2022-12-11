@@ -57,7 +57,9 @@ export function Proposal(props: ProposalProps): ReactElement {
 
     console.info("Executing proposal:", props.model.id);
 
-    const proposalTxn = await props.contract.executeProposal(props.model.id);
+    const proposalTxn = await props.contract.executeProposal(props.model.id, {
+      value: props.model.request.amount
+    });
 
     await proposalTxn.wait();
 

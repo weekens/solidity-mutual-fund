@@ -1,8 +1,9 @@
 import { ReactElement } from "react";
 import Grid from "@mui/material/Grid";
+import { BigNumber, ethers } from "ethers";
 
 interface AccountInfoProps {
-  totalBalance: string;
+  totalBalance: BigNumber;
 }
 
 export function AccountInfo(props: AccountInfoProps): ReactElement {
@@ -12,7 +13,7 @@ export function AccountInfo(props: AccountInfoProps): ReactElement {
         Total balance:
       </Grid>
       <Grid item xs={6}>
-        {props.totalBalance}
+        {ethers.utils.formatEther(props.totalBalance)} ETH
       </Grid>
     </Grid>
   );

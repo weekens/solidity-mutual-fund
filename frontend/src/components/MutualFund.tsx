@@ -1,5 +1,5 @@
 import { useWeb3React } from "@web3-react/core";
-import { ethers, Signer } from "ethers";
+import { BigNumber, ethers, Signer } from "ethers";
 import { ReactElement, ReactNode, SyntheticEvent, useEffect, useState } from "react";
 import MutualFundArtifact from "../contracts/MutualFund.sol/MutualFund.json"
 import { Provider } from "../utils/provider";
@@ -58,7 +58,7 @@ export function MutualFund(): ReactElement {
   const [signer, setSigner] = useState<Signer>();
   const [contract, setContract] = useState<MutualFundContract>();
   const [tabIndex, setTabIndex] = useState<number>(0);
-  const [totalBalance, setTotalBalance] = useState<string>("");
+  const [totalBalance, setTotalBalance] = useState<BigNumber>(BigNumber.from(0));
   const [members, setMembers] = useState<MemberModel[]>([]);
   const [proposals, setProposals] = useState<ProposalModel[]>([]);
 
@@ -90,6 +90,10 @@ export function MutualFund(): ReactElement {
         console.log(">> NewProposal event! id =", id, ", author =", author);
       });
 
+      mutualFundContract.on("ProposalExecuted", (id) => {
+        console.log(">> ProposalExecuted event! id =", id);
+      });
+
       setContract(mutualFundContract as unknown as MutualFundContract);
     }
 
@@ -102,7 +106,7 @@ export function MutualFund(): ReactElement {
     const loadData = async () => {
       const totalBalance = await contract.getTotalBalance();
 
-      setTotalBalance(totalBalance.toString());
+      setTotalBalance(totalBalance);
 
       await Promise.all([
         contract.getMembers().then((members: MemberModel[]) => {

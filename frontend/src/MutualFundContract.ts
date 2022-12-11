@@ -15,5 +15,5 @@ export interface MutualFundContract {
 
   canExecuteProposal(proposalId: string): Promise<[boolean, string]>;
 
-  executeProposal(proposalId: string): Promise<ContractTransaction>;
+  executeProposal(proposalId: string, networkParameters: { value?: BigNumber }): Promise<ContractTransaction>;
 }
