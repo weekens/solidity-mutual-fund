@@ -1,6 +1,7 @@
 import { ProposalType, toProposalType } from "../models/ProposalType";
-import { ChangeEvent, ReactElement, useState } from "react";
+import { ChangeEvent, ReactElement, SyntheticEvent, useState } from "react";
 import {
+  Alert,
   Dialog, DialogActions,
   DialogContent,
   DialogTitle,
@@ -8,21 +9,16 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  SelectChangeEvent, TextField
+  SelectChangeEvent, Snackbar, TextField
 } from "@mui/material";
 import { ethers } from "ethers";
 import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
-
-export interface NewProposalSubmitEvent {
-  proposalType: ProposalType;
-  amount?: string;
-  address?: string;
-}
+import { MutualFundContract } from "../MutualFundContract";
 
 export interface NewProposalProps {
-  onSubmit: (event: NewProposalSubmitEvent) => void;
+  contract: MutualFundContract;
 }
 
 export function NewProposal(props: NewProposalProps): ReactElement {
@@ -30,6 +26,8 @@ export function NewProposal(props: NewProposalProps): ReactElement {
   const [proposalType, setProposalType] = useState<ProposalType>(0);
   const [amount, setAmount] = useState<string>("");
   const [address, setAddress] = useState<string>("");
+  const [submitSnackbarOpen, setSubmitSnackbarOpen] = useState<boolean>(false);
+  const [newProposalSnackbarOpen, setNewProposalSnackbarOpen] = useState<boolean>(false);
 
   function handleNewProposalClick() {
     setModalOpen(true);
@@ -52,15 +50,24 @@ export function NewProposal(props: NewProposalProps): ReactElement {
     setAddress(event.target.value);
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setModalOpen(false);
 
     if (proposalType !== undefined) {
-      props.onSubmit({
-        proposalType,
-        amount,
-        address
+      if (!amount || !address) return;
+
+      const proposalTxn = await props.contract.submitProposal({
+        proposalType: proposalType.valueOf(),
+        amount: ethers.utils.parseEther(amount),
+        addresses: [ethers.utils.getAddress(address)]
       });
+
+      setSubmitSnackbarOpen(true);
+
+      await proposalTxn.wait();
+
+      setSubmitSnackbarOpen(false);
+      setNewProposalSnackbarOpen(true);
     }
 
     reset();
@@ -85,11 +92,38 @@ export function NewProposal(props: NewProposalProps): ReactElement {
     setAddress("");
   }
 
+  function handleSubmitSnackbarClose(event: SyntheticEvent | Event, reason?: string) {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setSubmitSnackbarOpen(false);
+  }
+
+  function handleNewProposalSnackbarClose(event: SyntheticEvent | Event, reason?: string) {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setNewProposalSnackbarOpen(false);
+  }
+
   return (
     <>
       <Button variant="outlined" onClick={handleNewProposalClick} sx={{ marginBottom: "15px" }}>
         <AddIcon/> New Proposal
       </Button>
+      <Snackbar
+        open={submitSnackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSubmitSnackbarClose}
+        message="Proposal has been submitted. Hang on while it gets approved by the network."
+      />
+      <Snackbar open={newProposalSnackbarOpen} autoHideDuration={6000} onClose={handleNewProposalSnackbarClose}>
+        <Alert onClose={handleNewProposalSnackbarClose} severity="success" sx={{ width: '100%' }}>
+          New proposal has been successfully registered!
+        </Alert>
+      </Snackbar>
       <Dialog open={modalOpen} onClose={handleClose}>
         <DialogTitle>New Proposal</DialogTitle>
         <DialogContent>

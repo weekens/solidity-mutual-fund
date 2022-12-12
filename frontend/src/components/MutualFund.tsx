@@ -13,7 +13,7 @@ import { Member } from "./Member";
 import { AccountInfo } from "./AccountInfo";
 import { ProposalModel } from "../models/ProposalModel";
 import { ProposalList } from "./ProposalList";
-import { NewProposal, NewProposalSubmitEvent } from "./NewProposal";
+import { NewProposal } from "./NewProposal";
 import { MutualFundContract } from "../MutualFundContract";
 
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
@@ -62,6 +62,7 @@ export function MutualFund(): ReactElement {
   const [members, setMembers] = useState<MemberModel[]>([]);
   const [selfMember, setSelfMember] = useState<MemberModel>();
   const [proposals, setProposals] = useState<ProposalModel[]>([]);
+  const [lastUpdateTimestamp, setLastUpdateTimestamp] = useState<number>(0);
 
   useEffect(() => {
     if (!library) {
@@ -89,10 +90,12 @@ export function MutualFund(): ReactElement {
 
       mutualFundContract.on("NewProposal", (id, author) => {
         console.log(">> NewProposal event! id =", id, ", author =", author);
+        setLastUpdateTimestamp(new Date().getTime());
       });
 
       mutualFundContract.on("ProposalExecuted", (id) => {
         console.log(">> ProposalExecuted event! id =", id);
+        setLastUpdateTimestamp(new Date().getTime());
       });
 
       setContract(mutualFundContract as unknown as MutualFundContract);
@@ -124,7 +127,7 @@ export function MutualFund(): ReactElement {
     };
 
     loadData().catch(console.error);
-  }, [contract]);
+  }, [contract, lastUpdateTimestamp]);
 
   useEffect(() => {
     async function loadSelfMember() {
@@ -140,27 +143,6 @@ export function MutualFund(): ReactElement {
 
   function handleTabChange(event: SyntheticEvent, newValue: number) {
     setTabIndex(newValue);
-  }
-
-  async function handleNewProposalSubmit(event: NewProposalSubmitEvent) {
-    console.log("new proposal, ", event);
-
-    if (!contract) throw new Error("Contract not loaded");
-
-    const amount = event.amount;
-    const address = event.address;
-
-    if (!amount || !address) return;
-
-    const proposalTxn = await contract.submitProposal({
-      proposalType: event.proposalType.valueOf(),
-      amount: ethers.utils.parseEther(amount),
-      addresses: [ethers.utils.getAddress(address)]
-    });
-
-    await proposalTxn.wait();
-
-    console.log("Proposal successfully submitted");
   }
 
   if (!contract)
@@ -194,7 +176,7 @@ export function MutualFund(): ReactElement {
       </TabPanel>
       <TabPanel index={tabIndex} value={2}>
         <Stack>
-          <NewProposal onSubmit={handleNewProposalSubmit} />
+          <NewProposal contract={contract} />
           <ProposalList proposals={proposals} contract={contract} />
         </Stack>
       </TabPanel>
