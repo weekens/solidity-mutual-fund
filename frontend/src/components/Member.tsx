@@ -2,6 +2,7 @@ import { MemberModel } from "../models/MemberModel";
 import { ReactElement } from "react";
 import Grid from "@mui/material/Grid";
 import { ethers } from "ethers";
+import { BlockchainAddress } from "./BlockchainAddress";
 
 export function Member(props: MemberModel): ReactElement {
   return (
@@ -10,7 +11,7 @@ export function Member(props: MemberModel): ReactElement {
         Address:
       </Grid>
       <Grid item xs={6}>
-        {props.addr}
+        <BlockchainAddress address={props.addr}/>
       </Grid>
       <Grid item xs={6}>
         Balance:

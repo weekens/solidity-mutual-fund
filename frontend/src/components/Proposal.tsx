@@ -18,6 +18,7 @@ import BoltIcon from '@mui/icons-material/Bolt';
 import { BlockTimestamp } from "./BlockTimestamp";
 import { MutualFundContract } from "../MutualFundContract";
 import { ethers } from "ethers";
+import { BlockchainAddress } from "./BlockchainAddress";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -75,7 +76,7 @@ export function Proposal(props: ProposalProps): ReactElement {
               Author:
             </Grid>
             <Grid item xs={6}>
-              {props.model.author}
+              <BlockchainAddress address={props.model.author} />
             </Grid>
             <Grid item xs={6}>
               Created at:
