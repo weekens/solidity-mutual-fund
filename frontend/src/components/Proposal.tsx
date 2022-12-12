@@ -19,6 +19,7 @@ import { BlockTimestamp } from "./BlockTimestamp";
 import { MutualFundContract } from "../MutualFundContract";
 import { ethers } from "ethers";
 import { BlockchainAddress } from "./BlockchainAddress";
+import { proposalTypeToString } from "../models/ProposalType";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -88,7 +89,7 @@ export function Proposal(props: ProposalProps): ReactElement {
               Type:
             </Grid>
             <Grid item xs={6}>
-              {props.model.request.proposalType}
+              {proposalTypeToString(props.model.request.proposalType)}
             </Grid>
             <Grid item xs={6}>
               Amount:

@@ -28,3 +28,16 @@ export function toProposalType(t: number): ProposalType {
       throw new Error("Unknown proposal type");
   }
 }
+
+export function proposalTypeToString(t: ProposalType): string {
+  switch (t) {
+    case ProposalType.DepositFunds:
+      return "Deposit Funds";
+
+    case ProposalType.AddMember:
+      return "Add Member";
+
+    default:
+      return t.toString();
+  }
+}
