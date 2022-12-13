@@ -1,5 +1,5 @@
 import { ProposalModel } from "../models/ProposalModel";
-import { ReactElement, useEffect, useState } from "react";
+import { ReactElement, SyntheticEvent, useEffect, useState } from "react";
 import { styled } from "@mui/material/styles";
 import {
   Grid,
@@ -9,7 +9,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   TableContainer,
-  Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip, tableCellClasses, Button, Stack
+  Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip, tableCellClasses, Button, Stack, Snackbar, Alert
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
@@ -39,6 +39,8 @@ export function Proposal(props: ProposalProps): ReactElement {
 
   const [canExecute, setCanExecute] = useState<boolean>(false);
   const [canNotExecuteReason, setCanNotExecuteReason] = useState<string>("");
+  const [executeSnackbarOpen, setExecuteSnackbarOpen] = useState<boolean>(false);
+  const [executeSuccessSnackbarOpen, setExecuteSuccessSnackbarOpen] = useState<boolean>(false);
 
   useEffect(() => {
     props
@@ -63,9 +65,28 @@ export function Proposal(props: ProposalProps): ReactElement {
       value: props.model.request.amount
     });
 
+    setExecuteSnackbarOpen(true);
+
     await proposalTxn.wait();
 
-    console.info("Proposal successfully executed");
+    setExecuteSnackbarOpen(false);
+    setExecuteSuccessSnackbarOpen(true);
+  }
+
+  function handleExecuteSnackbarClose(event: SyntheticEvent | Event, reason?: string) {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setExecuteSnackbarOpen(false);
+  }
+
+  function handleExecuteSuccessSnackbarClose(event: SyntheticEvent | Event, reason?: string) {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setExecuteSuccessSnackbarOpen(false);
   }
 
   return (
@@ -96,6 +117,12 @@ export function Proposal(props: ProposalProps): ReactElement {
             </Grid>
             <Grid item xs={6}>
               {ethers.utils.formatEther(props.model.request.amount)} ETH
+            </Grid>
+            <Grid item xs={6}>
+              Addresses:
+            </Grid>
+            <Grid item xs={6}>
+              {props.model.request.addresses.join(",")}
             </Grid>
           </Grid>
           <Accordion sx={{ width: "100%" }}>
@@ -163,6 +190,17 @@ export function Proposal(props: ProposalProps): ReactElement {
           }
         </Stack>
       </CardContent>
+      <Snackbar
+        open={executeSnackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleExecuteSnackbarClose}
+        message="Proposal execution has been triggered. Hang on while the proposal gets executed by the network."
+      />
+      <Snackbar open={executeSuccessSnackbarOpen} autoHideDuration={6000} onClose={handleExecuteSuccessSnackbarClose}>
+        <Alert onClose={handleExecuteSuccessSnackbarClose} severity="success" sx={{ width: '100%' }}>
+          Proposal has been successfully executed!
+        </Alert>
+      </Snackbar>
     </Card>
   );
 }
