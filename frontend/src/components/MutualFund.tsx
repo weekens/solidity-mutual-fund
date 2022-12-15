@@ -65,15 +65,7 @@ export function MutualFund(): ReactElement {
   const [lastUpdateTimestamp, setLastUpdateTimestamp] = useState<number>(0);
 
   useEffect(() => {
-    if (!library) {
-      if (signer) {
-        setSigner(undefined);
-      }
-
-      return;
-    }
-
-    setSigner(library.getSigner());
+    setSigner(library?.getSigner() || undefined);
   }, [library]);
 
   useEffect(() => {
@@ -168,7 +160,7 @@ export function MutualFund(): ReactElement {
         {
           members.map((member) => {
             return (
-              <Member key={member.addr} addr={member.addr} balance={member.balance}/>
+              <Member key={member.addr} model={member} totalBalance={totalBalance}/>
             )
           })
         }

@@ -1,11 +1,16 @@
 import { MemberModel } from "../models/MemberModel";
 import { ReactElement } from "react";
 import Grid from "@mui/material/Grid";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { BlockchainAddress } from "./BlockchainAddress";
 import { Card, CardContent } from "@mui/material";
 
-export function Member(props: MemberModel): ReactElement {
+export interface MemberProps {
+  model: MemberModel;
+  totalBalance: BigNumber;
+}
+
+export function Member(props: MemberProps): ReactElement {
   return (
     <Card>
       <CardContent>
@@ -14,13 +19,14 @@ export function Member(props: MemberModel): ReactElement {
             Address:
           </Grid>
           <Grid item xs={6}>
-            <BlockchainAddress address={props.addr}/>
+            <BlockchainAddress address={props.model.addr}/>
           </Grid>
           <Grid item xs={6}>
             Balance:
           </Grid>
           <Grid item xs={6}>
-            {ethers.utils.formatEther(props.balance)} ETH
+            {ethers.utils.formatEther(props.model.balance)} ETH (
+            {props.model.balance.div(props.totalBalance).mul(100).toNumber()}%)
           </Grid>
         </Grid>
       </CardContent>
