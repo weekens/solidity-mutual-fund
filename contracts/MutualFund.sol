@@ -15,12 +15,14 @@ contract MutualFund {
     using ABDKMath64x64 for int128;
 
     struct Configuration {
+        string founderName;
         uint64 votingPeriod;
         uint64 gracePeriod;
         uint64 proposalExpiryPeriod;
     }
 
     struct Member {
+        string name;
         address addr;
         uint balance;
     }
@@ -38,6 +40,7 @@ contract MutualFund {
 
     struct ProposalRequest {
         ProposalType proposalType;
+        string name;
         uint amount;
         address[] addresses;
     }
@@ -74,7 +77,7 @@ contract MutualFund {
 
     constructor(Configuration memory config) {
         configuration = config;
-        members.push(Member({ addr: msg.sender, balance: 0 }));
+        members.push(Member({ name: config.founderName, addr: msg.sender, balance: 0 }));
         uniswapRouter = IUniswapV2Router01(0xf164fC0Ec4E93095b804a4795bBe1e041497b92a);
         uniswapRouter2 = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     }
@@ -206,7 +209,7 @@ contract MutualFund {
 
             require(!hasMemberWithAddress(addr), "Member already exists");
 
-            members.push(Member({ addr: addr, balance: 0 }));
+            members.push(Member({ name: request.name, addr: addr, balance: 0 }));
         }
     }
 

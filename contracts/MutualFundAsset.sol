@@ -9,15 +9,21 @@ contract MutualFundAsset is IAsset {
 
     address tokenAddress;
     address fundAddress;
+    string name;
 
-    constructor(address initTokenAddress, address initFundAddress) {
+    constructor(address initTokenAddress, address initFundAddress, string memory initName) {
         tokenAddress = initTokenAddress;
         fundAddress = initFundAddress;
+        name = initName;
     }
 
     modifier fundOnly() {
         require(msg.sender == fundAddress, "Only allowed to owning fund");
         _;
+    }
+
+    function getName() external override(IAsset) view returns (string memory) {
+        return name;
     }
 
     function getTokenAddress() external override(IAsset) view returns (address) {

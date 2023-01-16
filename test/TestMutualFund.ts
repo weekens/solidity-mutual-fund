@@ -24,7 +24,8 @@ describe("MutualFund", function () {
             {
                 proposalType: ProposalType.DepositFunds,
                 amount: 20,
-                addresses: []
+                addresses: [],
+                name: ""
             }
         );
 
@@ -210,7 +211,7 @@ describe("MutualFund", function () {
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const MutualFundAsset = await ethers.getContractFactory("MutualFundAsset");
         const fund = await MutualFund.deploy(defaultFundConfig());
-        const asset = await MutualFundAsset.deploy(assetTokenAddress, fund.address);
+        const asset = await MutualFundAsset.deploy(assetTokenAddress, fund.address, "USDC");
 
         const initialAssetBalance = await assetTokenContract.balanceOf(asset.address);
 
@@ -228,7 +229,8 @@ describe("MutualFund", function () {
             {
                 proposalType: ProposalType.AddAsset,
                 amount: 0,
-                addresses: [asset.address]
+                addresses: [asset.address],
+                name: ""
             }
         );
 
@@ -253,7 +255,8 @@ describe("MutualFund", function () {
                 {
                     proposalType: ProposalType.Swap,
                     amount: ethers.utils.parseEther("2"),
-                    addresses: [fund.address, asset.address]
+                    addresses: [fund.address, asset.address],
+                    name: ""
                 },
                 { from: signer.address }
             )
@@ -265,7 +268,8 @@ describe("MutualFund", function () {
             {
                 proposalType: ProposalType.Swap,
                 amount: ethers.utils.parseEther("0.6"),
-                addresses: [fund.address, asset.address]
+                addresses: [fund.address, asset.address],
+                name: ""
             }
         );
         await executeProposal(
@@ -314,7 +318,8 @@ describe("MutualFund", function () {
         const fund = await MutualFund.deploy({
             votingPeriod: 2 * 60 * 60,
             gracePeriod: 60 * 60,
-            proposalExpiryPeriod: defaultFundConfig().proposalExpiryPeriod
+            proposalExpiryPeriod: defaultFundConfig().proposalExpiryPeriod,
+            founderName: "admin"
         });
         const [founder, member1, member2] = await ethers.getSigners();
 
@@ -323,6 +328,7 @@ describe("MutualFund", function () {
         // Add new member.
         const memberProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.AddMember,
+            name: "member1",
             amount: 0,
             addresses: [member1.address]
         });
@@ -336,7 +342,8 @@ describe("MutualFund", function () {
             {
                 proposalType: ProposalType.DepositFunds,
                 amount: 1000,
-                addresses: []
+                addresses: [],
+                name: ""
             }
         );
         await voteForProposal(fund, founder.address, depositProposalId);
@@ -353,6 +360,7 @@ describe("MutualFund", function () {
             member1.address,
             {
                 proposalType: ProposalType.AddMember,
+                name: "member2",
                 amount: 0,
                 addresses: [member2.address]
             }
@@ -395,6 +403,7 @@ describe("MutualFund", function () {
         // Submit proposal.
         const memberProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.AddMember,
+            name: "member1",
             amount: 0,
             addresses: [member1.address]
         });
@@ -426,13 +435,15 @@ describe("MutualFund", function () {
         const gracePeriodProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.ChangeGracePeriod,
             amount: 0,
-            addresses: []
+            addresses: [],
+            name: ""
         });
         await executeProposal(fund, founder.address, gracePeriodProposalId);
 
         // Add new member.
         const memberProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.AddMember,
+            name: "member1",
             amount: 0,
             addresses: [member1.address]
         });
@@ -445,7 +456,8 @@ describe("MutualFund", function () {
             {
                 proposalType: ProposalType.DepositFunds,
                 amount: 1000,
-                addresses: []
+                addresses: [],
+                name: ""
             }
         );
         await voteForProposal(fund, founder.address, depositProposalId);
@@ -456,7 +468,8 @@ describe("MutualFund", function () {
         const gracePeriod2ProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.ChangeGracePeriod,
             amount: 10 * 60,
-            addresses: []
+            addresses: [],
+            name: ""
         });
         await voteAgainstProposal(fund, member1.address, gracePeriod2ProposalId);
         // Wait for voting period to pass. There should be no grace period.
@@ -468,7 +481,8 @@ describe("MutualFund", function () {
         const kickProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.KickMember,
             amount: 0,
-            addresses: [member1.address]
+            addresses: [member1.address],
+            name: ""
         });
         await voteAgainstProposal(fund, member1.address, kickProposalId);
         await expect(
@@ -485,13 +499,15 @@ describe("MutualFund", function () {
         const votingPeriodProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.ChangeVotingPeriod,
             amount: 0,
-            addresses: []
+            addresses: [],
+            name: ""
         });
         await executeProposal(fund, founder.address, votingPeriodProposalId);
 
         // Add new member.
         const member2ProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.AddMember,
+            name: "member2",
             amount: 0,
             addresses: [member2.address]
         });
@@ -504,7 +520,8 @@ describe("MutualFund", function () {
             {
                 proposalType: ProposalType.DepositFunds,
                 amount: 2000,
-                addresses: []
+                addresses: [],
+                name: ""
             }
         );
         await expect(
@@ -524,14 +541,16 @@ describe("MutualFund", function () {
             fund.connect(await ethers.getSigner(founder.address)).submitProposal({
                 proposalType: ProposalType.ChangeVotingPeriod,
                 amount: ethers.constants.MaxUint256,
-                addresses: []
+                addresses: [],
+                name: ""
             })
         ).to.be.revertedWithPanic(0x11);
         await expect(
             fund.connect(await ethers.getSigner(founder.address)).submitProposal({
                 proposalType: ProposalType.ChangeGracePeriod,
                 amount: ethers.constants.MaxUint256,
-                addresses: []
+                addresses: [],
+                name: ""
             })
         ).to.be.revertedWithPanic(0x11);
     });

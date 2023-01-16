@@ -18,6 +18,7 @@ export async function depositFunds(fund: MutualFund, from: string, amount: BigNu
         fund,
         from,
         {
+            name: "",
             proposalType: ProposalType.DepositFunds,
             amount,
             addresses: []
@@ -36,7 +37,8 @@ export function defaultFundConfig(): MutualFund.ConfigurationStruct {
     return {
         votingPeriod: 2 * 60 * 60,
         gracePeriod: 60 * 60,
-        proposalExpiryPeriod: 5 * 24 * 60 * 60
+        proposalExpiryPeriod: 5 * 24 * 60 * 60,
+        founderName: "admin"
     };
 }
 

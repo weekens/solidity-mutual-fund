@@ -34,6 +34,7 @@ describe("Membership Tests", function () {
 
         const memberProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.AddMember,
+            name: "member1",
             amount: 0,
             addresses: [member1.address]
         });
@@ -58,7 +59,8 @@ describe("Membership Tests", function () {
             {
                 proposalType: ProposalType.DepositFunds,
                 amount: ethers.utils.parseEther("100"),
-                addresses: []
+                addresses: [],
+                name: ""
             }
         );
         await expect(
@@ -83,6 +85,7 @@ describe("Membership Tests", function () {
             fund.submitProposal(
                 {
                     proposalType: ProposalType.AddMember,
+                    name: "member1",
                     amount: 0,
                     addresses: [member1.address]
                 }
@@ -94,7 +97,8 @@ describe("Membership Tests", function () {
         const kickProposalId = await submitProposal(fund, founder.address, {
             proposalType: ProposalType.KickMember,
             amount: 0,
-            addresses: [member1.address]
+            addresses: [member1.address],
+            name: ""
         });
         await voteAgainstProposal(fund, member1.address, kickProposalId);
 
