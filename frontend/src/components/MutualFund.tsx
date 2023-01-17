@@ -114,6 +114,9 @@ export function MutualFund(): ReactElement {
           console.log("proposals =", proposals);
 
           setProposals(proposals);
+        }),
+        contract.getAssets().then(async (assets: string[]) => {
+          console.log("assets =", assets);
         })
       ]);
     };

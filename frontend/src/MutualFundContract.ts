@@ -11,6 +11,8 @@ export interface MutualFundContract {
 
   getProposals(): Promise<ProposalModel[]>;
 
+  getAssets(): Promise<string[]>;
+
   submitProposal(proposal: ProposalSubmissionModel): Promise<ContractTransaction>;
 
   canExecuteProposal(proposalId: string): Promise<[boolean, string]>;
