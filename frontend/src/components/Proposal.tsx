@@ -163,7 +163,7 @@ export function Proposal(props: ProposalProps): ReactElement {
                     {props.model.votes.map(vote => (
                       <TableRow key={vote.memberAddress}>
                         <TableCell component="th" scope="row">
-                          {vote.memberAddress}
+                          <BlockchainAddress address={vote.memberAddress} />
                         </TableCell>
                         <TableCell component="th" scope="row">
                           {
