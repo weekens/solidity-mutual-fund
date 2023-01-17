@@ -4,12 +4,13 @@ import {
   NoEthereumProviderError,
   UserRejectedRequestError
 } from "@web3-react/injected-connector";
-import { MouseEvent, ReactElement, useState } from "react";
+import { MouseEvent, ReactElement, useEffect, useState } from "react";
 import { injected } from "../utils/connectors";
 import { useEagerConnect, useInactiveListener } from "../utils/hooks";
 import { Provider } from "../utils/provider";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
+import { BlockchainAddress } from "./BlockchainAddress";
 
 type ActivateFunction = (
   connector: AbstractConnector,
@@ -96,14 +97,31 @@ function Deactivate(): ReactElement {
 
 export function ActivateDeactivate(): ReactElement {
   const context = useWeb3React<Provider>();
-  const { error } = context;
+  const { library, error } = context;
+  const [selfAddress, setSelfAddress] = useState<string>();
 
   if (!!error) {
     window.alert(getErrorMessage(error));
   }
 
+  useEffect(() => {
+    library
+      ?.getSigner()
+      ?.getAddress()
+      ?.then(address => {
+        setSelfAddress(address);
+      })
+  });
+
   return (
-    <Stack direction="row" justifyContent="flex-end">
+    <Stack direction="row" justifyContent="flex-end" spacing={2}>
+      {
+        !!selfAddress
+        ?
+        <BlockchainAddress address={selfAddress} />
+        :
+        (<></>)
+      }
       <Activate />
       <Deactivate />
     </Stack>

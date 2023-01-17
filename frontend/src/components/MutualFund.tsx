@@ -172,7 +172,7 @@ export function MutualFund(): ReactElement {
       <TabPanel index={tabIndex} value={2}>
         <Stack>
           <NewProposal contract={contract} />
-          <ProposalList proposals={proposals} contract={contract} />
+          <ProposalList proposals={proposals} contract={contract} member={selfMember} />
         </Stack>
       </TabPanel>
     </Box>

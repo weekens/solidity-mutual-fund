@@ -15,6 +15,8 @@ export interface MutualFundContract {
 
   submitProposal(proposal: ProposalSubmissionModel): Promise<ContractTransaction>;
 
+  vote(proposalId: string, support: boolean): Promise<ContractTransaction>;
+
   canExecuteProposal(proposalId: string): Promise<[boolean, string]>;
 
   executeProposal(proposalId: string, networkParameters: { value?: BigNumber }): Promise<ContractTransaction>;

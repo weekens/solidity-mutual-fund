@@ -20,6 +20,7 @@ import { MutualFundContract } from "../MutualFundContract";
 import { ethers } from "ethers";
 import { BlockchainAddress } from "./BlockchainAddress";
 import { proposalTypeToString } from "../models/ProposalType";
+import { MemberModel } from "../models/MemberModel";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -31,6 +32,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 export interface ProposalProps {
   model: ProposalModel;
   contract: MutualFundContract;
+  member: MemberModel;
 }
 
 export function Proposal(props: ProposalProps): ReactElement {
@@ -40,7 +42,10 @@ export function Proposal(props: ProposalProps): ReactElement {
   const [canExecute, setCanExecute] = useState<boolean>(false);
   const [canNotExecuteReason, setCanNotExecuteReason] = useState<string>("");
   const [executeSnackbarOpen, setExecuteSnackbarOpen] = useState<boolean>(false);
+  const [voteSnackbarOpen, setVoteSnackbarOpen] = useState<boolean>(false);
   const [executeSuccessSnackbarOpen, setExecuteSuccessSnackbarOpen] = useState<boolean>(false);
+  const [voteSuccessSnackbarOpen, setVoteSuccessSnackbarOpen] = useState<boolean>(false);
+  const canVote = !props.model.votes.some(v => v.memberAddress === props.member.addr);
 
   useEffect(() => {
     props
@@ -73,6 +78,25 @@ export function Proposal(props: ProposalProps): ReactElement {
     setExecuteSuccessSnackbarOpen(true);
   }
 
+  async function handleVoteForProposalClick() {
+    await handleVoteClick(true);
+  }
+
+  async function handleVoteAgainstProposalClick() {
+    await handleVoteClick(false);
+  }
+
+  async function handleVoteClick(support: boolean) {
+    const voteTxn = await props.contract.vote(props.model.id, support);
+
+    setVoteSnackbarOpen(true);
+
+    await voteTxn.wait();
+
+    setVoteSnackbarOpen(false);
+    setVoteSuccessSnackbarOpen(true);
+  }
+
   function handleExecuteSnackbarClose(event: SyntheticEvent | Event, reason?: string) {
     if (reason === 'clickaway') {
       return;
@@ -81,12 +105,28 @@ export function Proposal(props: ProposalProps): ReactElement {
     setExecuteSnackbarOpen(false);
   }
 
+  function handleVoteSnackbarClose(event: SyntheticEvent | Event, reason?: string) {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setVoteSnackbarOpen(false);
+  }
+
   function handleExecuteSuccessSnackbarClose(event: SyntheticEvent | Event, reason?: string) {
     if (reason === 'clickaway') {
       return;
     }
 
     setExecuteSuccessSnackbarOpen(false);
+  }
+
+  function handleVoteSuccessSnackbarClose(event: SyntheticEvent | Event, reason?: string) {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setVoteSuccessSnackbarOpen(false);
   }
 
   return (
@@ -181,19 +221,41 @@ export function Proposal(props: ProposalProps): ReactElement {
               </TableContainer>
             </AccordionDetails>
           </Accordion>
+          <Grid container justifyContent="flex-end" spacing={2}>
           {
             canExecute
             ?
-            <Grid container justifyContent="flex-end">
-              <Grid item xs={3}>
-                <Button variant="contained" fullWidth={true} onClick={handleExecuteProposalClick}>
-                  <BoltIcon sx={{ color: "#f5f500" }} /> Execute proposal
-                </Button>
-              </Grid>
+            <Grid item xs={3}>
+              <Button variant="contained" fullWidth={true} onClick={handleExecuteProposalClick}>
+                <BoltIcon sx={{ color: "#f5f500" }} /> Execute proposal
+              </Button>
             </Grid>
             :
             (<></>)
           }
+          {
+            canVote
+            ?
+            <Grid item xs={3}>
+              <Button variant="contained" fullWidth={true} color="success" onClick={handleVoteForProposalClick}>
+                <ThumbUpAltIcon /> Vote for proposal
+              </Button>
+            </Grid>
+            :
+            (<></>)
+          }
+          {
+            canVote
+            ?
+            <Grid item xs={3}>
+              <Button variant="contained" fullWidth={true} color="error" onClick={handleVoteAgainstProposalClick}>
+                <ThumbDownAltIcon /> Vote against proposal
+              </Button>
+            </Grid>
+            :
+            (<></>)
+          }
+          </Grid>
         </Stack>
       </CardContent>
       <Snackbar
@@ -202,9 +264,20 @@ export function Proposal(props: ProposalProps): ReactElement {
         onClose={handleExecuteSnackbarClose}
         message="Proposal execution has been triggered. Hang on while the proposal gets executed by the network."
       />
+      <Snackbar
+        open={voteSnackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleVoteSnackbarClose}
+        message="Proposal vote has been submitted. Hang on while the vote gets processed by the network."
+      />
       <Snackbar open={executeSuccessSnackbarOpen} autoHideDuration={6000} onClose={handleExecuteSuccessSnackbarClose}>
         <Alert onClose={handleExecuteSuccessSnackbarClose} severity="success" sx={{ width: '100%' }}>
           Proposal has been successfully executed!
+        </Alert>
+      </Snackbar>
+      <Snackbar open={voteSuccessSnackbarOpen} autoHideDuration={6000} onClose={handleVoteSuccessSnackbarClose}>
+        <Alert onClose={handleVoteSuccessSnackbarClose} severity="success" sx={{ width: '100%' }}>
+          Vote has been successfully processed!
         </Alert>
       </Snackbar>
     </Card>
