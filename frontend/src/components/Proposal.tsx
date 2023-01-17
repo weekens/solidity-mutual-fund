@@ -113,6 +113,12 @@ export function Proposal(props: ProposalProps): ReactElement {
               {proposalTypeToString(props.model.request.proposalType)}
             </Grid>
             <Grid item xs={6}>
+              Name:
+            </Grid>
+            <Grid item xs={6}>
+              {props.model.request.name}
+            </Grid>
+            <Grid item xs={6}>
               Amount:
             </Grid>
             <Grid item xs={6}>

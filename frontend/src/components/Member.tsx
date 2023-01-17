@@ -16,6 +16,12 @@ export function Member(props: MemberProps): ReactElement {
       <CardContent>
         <Grid container>
           <Grid item xs={6}>
+            Name:
+          </Grid>
+          <Grid item xs={6}>
+            {props.model.name}
+          </Grid>
+          <Grid item xs={6}>
             Address:
           </Grid>
           <Grid item xs={6}>

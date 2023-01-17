@@ -24,6 +24,7 @@ export interface NewProposalProps {
 export function NewProposal(props: NewProposalProps): ReactElement {
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [proposalType, setProposalType] = useState<ProposalType>(0);
+  const [name, setName] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [address, setAddress] = useState<string>("");
   const [submitSnackbarOpen, setSubmitSnackbarOpen] = useState<boolean>(false);
@@ -42,6 +43,10 @@ export function NewProposal(props: NewProposalProps): ReactElement {
     setProposalType(toProposalType(Number(event.target.value)));
   }
 
+  function handleNameChange(event: ChangeEvent<HTMLInputElement>) {
+    setName(event.target.value);
+  }
+
   function handleAmountChange(event: ChangeEvent<HTMLInputElement>) {
     setAmount(event.target.value);
   }
@@ -58,6 +63,7 @@ export function NewProposal(props: NewProposalProps): ReactElement {
 
       const proposalTxn = await props.contract.submitProposal({
         proposalType: proposalType.valueOf(),
+        name: name,
         amount: ethers.utils.parseEther(amount),
         addresses: [ethers.utils.getAddress(address)]
       });
@@ -137,6 +143,11 @@ export function NewProposal(props: NewProposalProps): ReactElement {
                   })
                 }
               </Select>
+              <TextField
+                label="Name"
+                value={name}
+                onChange={handleNameChange}
+              />
               <TextField
                 label="Amount"
                 value={amount}
