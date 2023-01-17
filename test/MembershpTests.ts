@@ -23,6 +23,7 @@ describe("Membership Tests", function () {
         const member = members.find(elem => elem.addr === signer.address);
 
         expect(member).to.not.be.null;
+        expect(member?.name).to.be.equal("admin");
     });
 
     it("should be able to invite a new member and kick a member", async () => {
