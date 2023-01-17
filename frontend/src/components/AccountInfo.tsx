@@ -21,7 +21,8 @@ export function AccountInfo(props: AccountInfoProps): ReactElement {
         Your balance:
       </Grid>
       <Grid item xs={6}>
-        {ethers.utils.formatEther(props.member.balance)} ETH ({props.member.balance.div(props.totalBalance).mul(100).toNumber()}%)
+        {ethers.utils.formatEther(props.member.balance)} ETH
+        ({props.totalBalance.gt(0) ? props.member.balance.div(props.totalBalance).mul(100).toNumber() : 0}%)
       </Grid>
     </Grid>
   );
