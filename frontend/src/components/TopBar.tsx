@@ -11,6 +11,7 @@ import { Provider } from "../utils/provider";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import { BlockchainAddress } from "./BlockchainAddress";
+import { WithdrawFunds } from "./WithdrawFunds";
 
 type ActivateFunction = (
   connector: AbstractConnector,
@@ -97,7 +98,7 @@ function Deactivate(): ReactElement {
 
 export function TopBar(): ReactElement {
   const context = useWeb3React<Provider>();
-  const { library, account, error } = context;
+  const { library, account, error, active } = context;
   const [selfAddress, setSelfAddress] = useState<string>();
 
   if (!!error) {
@@ -119,6 +120,13 @@ export function TopBar(): ReactElement {
         !!selfAddress
         ?
         <BlockchainAddress address={selfAddress} />
+        :
+        (<></>)
+      }
+      {
+        active
+        ?
+        <WithdrawFunds />
         :
         (<></>)
       }

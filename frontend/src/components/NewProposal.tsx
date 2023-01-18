@@ -101,6 +101,7 @@ export function NewProposal(props: NewProposalProps): ReactElement {
     setProposalType(ProposalType.DepositFunds);
     setAmount("");
     setAddress("");
+    setAddress2("");
   }
 
   function handleSubmitSnackbarClose(event: SyntheticEvent | Event, reason?: string) {
