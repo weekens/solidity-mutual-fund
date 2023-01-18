@@ -77,6 +77,8 @@ export function WithdrawFunds(): ReactElement {
   }
 
   async function handleSubmit() {
+    setModalOpen(false);
+
     const parsedAmount = parseInt(amount);
 
     if (!contract || isNaN(parsedAmount)) return;
@@ -89,6 +91,8 @@ export function WithdrawFunds(): ReactElement {
 
     setWithdrawSnackbarOpen(false);
     setWithdrawSuccessSnackbarOpen(true);
+
+    reset();
   }
 
   function handleWithdrawSnackbarClose() {
