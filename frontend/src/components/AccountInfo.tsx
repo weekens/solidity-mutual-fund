@@ -2,6 +2,7 @@ import { ReactElement } from "react";
 import Grid from "@mui/material/Grid";
 import { BigNumber, ethers } from "ethers";
 import { MemberModel } from "../models/MemberModel";
+import { BlockchainAddress } from "./BlockchainAddress";
 
 interface AccountInfoProps {
   totalBalance: BigNumber;
@@ -9,8 +10,16 @@ interface AccountInfoProps {
 }
 
 export function AccountInfo(props: AccountInfoProps): ReactElement {
+  const fundAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
+
   return (
     <Grid container>
+      <Grid item xs={6}>
+        Fund address:
+      </Grid>
+      <Grid item xs={6}>
+        <BlockchainAddress address={fundAddress} />
+      </Grid>
       <Grid item xs={6}>
         Total balance:
       </Grid>
