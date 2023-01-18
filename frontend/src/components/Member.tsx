@@ -32,7 +32,7 @@ export function Member(props: MemberProps): ReactElement {
           </Grid>
           <Grid item xs={6}>
             {ethers.utils.formatEther(props.model.balance)} ETH (
-            {props.model.balance.div(props.totalBalance).mul(100).toNumber()}%)
+            {props.model.balance.mul(100).div(props.totalBalance).toNumber()}%)
           </Grid>
         </Grid>
       </CardContent>
