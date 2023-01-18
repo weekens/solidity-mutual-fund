@@ -92,6 +92,12 @@ export function MutualFund(): ReactElement {
         setLastUpdateTimestamp(new Date().getTime());
       });
 
+      mutualFundContract.on("NewVote", (proposalId, memberAddress, support) => {
+        console.log(
+          ">> NewVote event! proposalId =", proposalId, ", memberAddress =", memberAddress, ", support =", support);
+        setLastUpdateTimestamp(new Date().getTime());
+      });
+
       setContract(mutualFundContract as unknown as MutualFundContract);
     }
 
@@ -177,7 +183,7 @@ export function MutualFund(): ReactElement {
       <TabPanel index={tabIndex} value={2}>
         <Stack>
           <NewProposal contract={contract} />
-          <ProposalList proposals={proposals} contract={contract} member={selfMember} />
+          <ProposalList proposals={proposals} contract={contract} />
         </Stack>
       </TabPanel>
       <TabPanel index={tabIndex} value={3}>

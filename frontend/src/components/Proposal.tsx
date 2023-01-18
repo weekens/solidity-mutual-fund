@@ -2,25 +2,37 @@ import { ProposalModel } from "../models/ProposalModel";
 import { ReactElement, SyntheticEvent, useEffect, useState } from "react";
 import { styled } from "@mui/material/styles";
 import {
-  Grid,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Button,
   Card,
   CardContent,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  Chip,
+  Grid,
+  Paper,
+  Snackbar,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  tableCellClasses,
   TableContainer,
-  Paper, TableCell, TableHead, TableRow, TableBody, Table, Chip, tableCellClasses, Button, Stack, Snackbar, Alert
+  TableHead,
+  TableRow
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
-import BoltIcon from '@mui/icons-material/Bolt';
+import BoltIcon from "@mui/icons-material/Bolt";
 import { BlockTimestamp } from "./BlockTimestamp";
 import { MutualFundContract } from "../MutualFundContract";
-import { ethers } from "ethers";
+import { ethers, Signer } from "ethers";
 import { BlockchainAddress } from "./BlockchainAddress";
 import { proposalTypeToString } from "../models/ProposalType";
-import { MemberModel } from "../models/MemberModel";
+import { useWeb3React } from "@web3-react/core";
+import { Provider } from "../utils/provider";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -32,20 +44,36 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 export interface ProposalProps {
   model: ProposalModel;
   contract: MutualFundContract;
-  member: MemberModel;
 }
 
 export function Proposal(props: ProposalProps): ReactElement {
   const yesVotes = props.model.votes.filter(v => v.support);
   const noVotes = props.model.votes.filter(v => !v.support);
 
+  const context = useWeb3React<Provider>();
+  const { library, account } = context;
+
+  const [signer, setSigner] = useState<Signer>();
+  const [signerAddress, setSignerAddress] = useState<string>();
   const [canExecute, setCanExecute] = useState<boolean>(false);
+  const [canVote, setCanVote] = useState<boolean>(false);
   const [canNotExecuteReason, setCanNotExecuteReason] = useState<string>("");
   const [executeSnackbarOpen, setExecuteSnackbarOpen] = useState<boolean>(false);
   const [voteSnackbarOpen, setVoteSnackbarOpen] = useState<boolean>(false);
   const [executeSuccessSnackbarOpen, setExecuteSuccessSnackbarOpen] = useState<boolean>(false);
   const [voteSuccessSnackbarOpen, setVoteSuccessSnackbarOpen] = useState<boolean>(false);
-  const canVote = !props.model.votes.some(v => v.memberAddress === props.member.addr);
+
+  useEffect(() => {
+    setSigner(library?.getSigner() || undefined);
+  }, [library, account]);
+
+  useEffect(() => {
+    const loadSignerAddress = async () => {
+      setSignerAddress(await signer?.getAddress() || undefined);
+    }
+
+    loadSignerAddress().catch(console.error);
+  }, [signer]);
 
   useEffect(() => {
     props
@@ -56,7 +84,11 @@ export function Proposal(props: ProposalProps): ReactElement {
         setCanNotExecuteReason(response[1]);
       })
       .catch(console.error)
-  })
+  }, [signerAddress, props.contract, props.model.id]);
+
+  useEffect(() => {
+    setCanVote(!!signerAddress && !props.model.votes.some(v => v.memberAddress === signerAddress));
+  }, [signerAddress, props.model.votes]);
 
   async function handleExecuteProposalClick() {
     if (!canExecute) {

@@ -37,7 +37,7 @@ export function Asset(props: AssetProps): ReactElement {
     }
 
     loadContract().catch(console.error);
-  }, [library]);
+  }, [library, props.address]);
 
   useEffect(() => {
     if (!contract) return;

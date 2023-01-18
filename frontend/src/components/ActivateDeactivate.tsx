@@ -97,7 +97,7 @@ function Deactivate(): ReactElement {
 
 export function ActivateDeactivate(): ReactElement {
   const context = useWeb3React<Provider>();
-  const { library, error } = context;
+  const { library, account, error } = context;
   const [selfAddress, setSelfAddress] = useState<string>();
 
   if (!!error) {
@@ -111,7 +111,7 @@ export function ActivateDeactivate(): ReactElement {
       ?.then(address => {
         setSelfAddress(address);
       })
-  });
+  }, [account]);
 
   return (
     <Stack direction="row" justifyContent="flex-end" spacing={2}>
