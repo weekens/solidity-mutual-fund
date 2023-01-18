@@ -27,6 +27,7 @@ export function NewProposal(props: NewProposalProps): ReactElement {
   const [name, setName] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [address, setAddress] = useState<string>("");
+  const [address2, setAddress2] = useState<string>("");
   const [submitSnackbarOpen, setSubmitSnackbarOpen] = useState<boolean>(false);
   const [newProposalSnackbarOpen, setNewProposalSnackbarOpen] = useState<boolean>(false);
 
@@ -55,6 +56,10 @@ export function NewProposal(props: NewProposalProps): ReactElement {
     setAddress(event.target.value);
   }
 
+  function handleAddress2Change(event: ChangeEvent<HTMLInputElement>) {
+    setAddress2(event.target.value);
+  }
+
   async function handleSubmit() {
     setModalOpen(false);
 
@@ -65,7 +70,7 @@ export function NewProposal(props: NewProposalProps): ReactElement {
         proposalType: proposalType.valueOf(),
         name: name,
         amount: ethers.utils.parseEther(amount),
-        addresses: [ethers.utils.getAddress(address)]
+        addresses: [ethers.utils.getAddress(address)].concat(!!address2 ? ethers.utils.getAddress(address2) : [])
       });
 
       setSubmitSnackbarOpen(true);
@@ -159,6 +164,12 @@ export function NewProposal(props: NewProposalProps): ReactElement {
                 value={address}
                 onChange={handleAddressChange}
                 error={!ethers.utils.isAddress(address)}
+              />
+              <TextField
+                label="Address 2"
+                value={address2}
+                onChange={handleAddress2Change}
+                error={address !== "" && !ethers.utils.isAddress(address)}
               />
             </FormControl>
           </Box>
