@@ -161,14 +161,14 @@ export function MutualFund(): ReactElement {
         </Tabs>
       </Box>
       <TabPanel value={tabIndex} index={0}>
-        <AccountInfo totalBalance={totalBalance} member={selfMember}/>
+        <AccountInfo totalBalance={totalBalance} member={selfMember} />
       </TabPanel>
       <TabPanel value={tabIndex} index={1}>
         <Stack gap="15px">
         {
           members.map((member) => {
             return (
-              <Member key={member.addr} model={member} totalBalance={totalBalance}/>
+              <Member key={member.addr} model={member} totalBalance={totalBalance} />
             )
           })
         }
