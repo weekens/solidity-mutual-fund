@@ -11,7 +11,7 @@ export function AssetList(props: AssetListProps): ReactElement {
     <Stack>
       {
         props.assetAddresses.map(assetAddress => {
-          return <Asset address={assetAddress} />;
+          return <Asset key={assetAddress} address={assetAddress} />;
         })
       }
     </Stack>

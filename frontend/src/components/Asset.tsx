@@ -1,12 +1,54 @@
-import { ReactElement } from "react";
+import { ReactElement, useEffect, useState } from "react";
+import IAssetArtifact from "../contracts/IAsset.sol/IAsset.json"
 import { Card, CardContent, Grid } from "@mui/material";
 import { BlockchainAddress } from "./BlockchainAddress";
+import { useWeb3React } from "@web3-react/core";
+import { Provider } from "../utils/provider";
+import { ethers } from "ethers";
+import { IAssetContract } from "../IAssetContract";
 
 export interface AssetProps {
   address: string;
 }
 
 export function Asset(props: AssetProps): ReactElement {
+  const context = useWeb3React<Provider>();
+  const { library } = context;
+  const [contract, setContract] = useState<IAssetContract>();
+  const [name, setName] = useState<string>();
+
+  useEffect(() => {
+    if (!library) return;
+
+    const signer = library.getSigner();
+
+    if (!signer) return;
+
+    async function loadContract() {
+      const assetContractFactory = new ethers.ContractFactory(
+        IAssetArtifact.abi,
+        IAssetArtifact.bytecode,
+        signer
+      );
+
+      const assetContract = await assetContractFactory.attach(props.address);
+
+      setContract(assetContract as unknown as IAssetContract);
+    }
+
+    loadContract().catch(console.error);
+  }, [library]);
+
+  useEffect(() => {
+    if (!contract) return;
+
+    const loadData = async () => {
+      setName(await contract.getName());
+    };
+
+    loadData().catch(console.error);
+  }, [contract]);
+
   return (
     <Card>
       <CardContent>
@@ -16,6 +58,12 @@ export function Asset(props: AssetProps): ReactElement {
           </Grid>
           <Grid item xs={6}>
             <BlockchainAddress address={props.address} />
+          </Grid>
+          <Grid item xs={6}>
+            Name:
+          </Grid>
+          <Grid item xs={6}>
+            {name}
           </Grid>
         </Grid>
       </CardContent>

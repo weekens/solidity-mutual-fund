@@ -74,13 +74,13 @@ export function MutualFund(): ReactElement {
     if (!signer) return;
 
     async function loadContract() {
-      const MutualFundContract = new ethers.ContractFactory(
+      const mutualFundContractFactory = new ethers.ContractFactory(
         MutualFundArtifact.abi,
         MutualFundArtifact.bytecode,
         signer
       );
 
-      const mutualFundContract = await MutualFundContract.attach(contractAddress);
+      const mutualFundContract = await mutualFundContractFactory.attach(contractAddress);
 
       mutualFundContract.on("NewProposal", (id, author) => {
         console.log(">> NewProposal event! id =", id, ", author =", author);
