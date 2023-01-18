@@ -95,7 +95,7 @@ function Deactivate(): ReactElement {
   );
 }
 
-export function ActivateDeactivate(): ReactElement {
+export function TopBar(): ReactElement {
   const context = useWeb3React<Provider>();
   const { library, account, error } = context;
   const [selfAddress, setSelfAddress] = useState<string>();
