@@ -20,4 +20,6 @@ export interface MutualFundContract {
   canExecuteProposal(proposalId: string): Promise<[boolean, string]>;
 
   executeProposal(proposalId: string, networkParameters: { value?: BigNumber }): Promise<ContractTransaction>;
+
+  exit(percent: number): Promise<ContractTransaction>;
 }

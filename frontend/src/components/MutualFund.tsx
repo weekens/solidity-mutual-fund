@@ -54,7 +54,7 @@ function tabProps(index: number) {
 
 export function MutualFund(): ReactElement {
   const context = useWeb3React<Provider>();
-  const { library } = context; // { library, active } could also be used.
+  const { library, account } = context;
 
   const [signer, setSigner] = useState<Signer>();
   const [contract, setContract] = useState<MutualFundContract>();
@@ -68,7 +68,7 @@ export function MutualFund(): ReactElement {
 
   useEffect(() => {
     setSigner(library?.getSigner() || undefined);
-  }, [library]);
+  }, [library, account]);
 
   useEffect(() => {
     if (!signer) return;

@@ -1,19 +1,55 @@
-import { ChangeEvent, ReactElement, useState } from "react";
+import { ChangeEvent, ReactElement, useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import {
+  Alert,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
-  InputAdornment,
+  InputAdornment, Snackbar,
   TextField
 } from "@mui/material";
 import Box from "@mui/material/Box";
+import { MutualFundContract } from "../MutualFundContract";
+import { useWeb3React } from "@web3-react/core";
+import { Provider } from "../utils/provider";
+import { ethers, Signer } from "ethers";
+import MutualFundArtifact from "../contracts/MutualFund.sol/MutualFund.json"
 
 export function WithdrawFunds(): ReactElement {
+  const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
+  const context = useWeb3React<Provider>();
+  const { library, account } = context;
+
+  const [signer, setSigner] = useState<Signer>();
+  const [contract, setContract] = useState<MutualFundContract>();
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [amount, setAmount] = useState<string>("100");
+  const [withdrawSnackbarOpen, setWithdrawSnackbarOpen] = useState<boolean>(false);
+  const [withdrawSuccessSnackbarOpen, setWithdrawSuccessSnackbarOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    setSigner(library?.getSigner() || undefined);
+  }, [library, account]);
+
+  useEffect(() => {
+    if (!signer) return;
+
+    async function loadContract() {
+      const mutualFundContractFactory = new ethers.ContractFactory(
+        MutualFundArtifact.abi,
+        MutualFundArtifact.bytecode,
+        signer
+      );
+
+      const mutualFundContract = await mutualFundContractFactory.attach(contractAddress);
+
+      setContract(mutualFundContract as unknown as MutualFundContract);
+    }
+
+    loadContract().catch(console.error);
+  }, [signer]);
 
   function handleWithdrawFundsClick() {
     setModalOpen(true);
@@ -33,14 +69,35 @@ export function WithdrawFunds(): ReactElement {
   }
 
   function isValidPercentage(value: string): boolean {
-    return !isNaN(parseFloat(value)) && isFinite(value as any);
+    return !isNaN(parseInt(value)) && isFinite(value as any);
   }
 
   function canSubmit(): boolean {
     return isValidPercentage(amount);
   }
 
-  async function handleSubmit() {}
+  async function handleSubmit() {
+    const parsedAmount = parseInt(amount);
+
+    if (!contract || isNaN(parsedAmount)) return;
+
+    const txn = await contract.exit(parsedAmount);
+
+    setWithdrawSnackbarOpen(true);
+
+    await txn.wait();
+
+    setWithdrawSnackbarOpen(false);
+    setWithdrawSuccessSnackbarOpen(true);
+  }
+
+  function handleWithdrawSnackbarClose() {
+    setWithdrawSnackbarOpen(false);
+  }
+
+  function handleWithdrawSuccessSnackbarClose() {
+    setWithdrawSuccessSnackbarOpen(false);
+  }
 
   return (
     <>
@@ -67,6 +124,17 @@ export function WithdrawFunds(): ReactElement {
           <Button variant="contained" onClick={handleSubmit} disabled={!canSubmit()}>Submit</Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={withdrawSnackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleWithdrawSnackbarClose}
+        message="Withdrawal request has been submitted. Hang on while it gets approved by the network."
+      />
+      <Snackbar open={withdrawSuccessSnackbarOpen} autoHideDuration={6000} onClose={handleWithdrawSuccessSnackbarClose}>
+        <Alert onClose={handleWithdrawSuccessSnackbarClose} severity="success" sx={{ width: '100%' }}>
+          Funds withdrawal request successfully executed! Funds should be in your wallet now.
+        </Alert>
+      </Snackbar>
     </>
   );
 }
