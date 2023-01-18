@@ -15,6 +15,7 @@ import { ProposalModel } from "../models/ProposalModel";
 import { ProposalList } from "./ProposalList";
 import { NewProposal } from "./NewProposal";
 import { MutualFundContract } from "../MutualFundContract";
+import { AssetList } from "./AssetList";
 
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
 
@@ -62,6 +63,7 @@ export function MutualFund(): ReactElement {
   const [members, setMembers] = useState<MemberModel[]>([]);
   const [selfMember, setSelfMember] = useState<MemberModel>();
   const [proposals, setProposals] = useState<ProposalModel[]>([]);
+  const [assetAddresses, setAssetAddresses] = useState<string[]>([]);
   const [lastUpdateTimestamp, setLastUpdateTimestamp] = useState<number>(0);
 
   useEffect(() => {
@@ -117,6 +119,8 @@ export function MutualFund(): ReactElement {
         }),
         contract.getAssets().then(async (assets: string[]) => {
           console.log("assets =", assets);
+
+          setAssetAddresses(assets);
         })
       ]);
     };
@@ -153,6 +157,7 @@ export function MutualFund(): ReactElement {
           <Tab label="Home" {...tabProps(0)} />
           <Tab label="Members" {...tabProps(1)} />
           <Tab label="Proposals" {...tabProps(2)} />
+          <Tab label="Assets" {...tabProps(3)} />
         </Tabs>
       </Box>
       <TabPanel value={tabIndex} index={0}>
@@ -174,6 +179,9 @@ export function MutualFund(): ReactElement {
           <NewProposal contract={contract} />
           <ProposalList proposals={proposals} contract={contract} member={selfMember} />
         </Stack>
+      </TabPanel>
+      <TabPanel index={tabIndex} value={3}>
+        <AssetList assetAddresses={assetAddresses} />
       </TabPanel>
     </Box>
   );
