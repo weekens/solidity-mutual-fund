@@ -16,6 +16,7 @@ export function Asset(props: AssetProps): ReactElement {
   const { library } = context;
   const [contract, setContract] = useState<IAssetContract>();
   const [name, setName] = useState<string>();
+  const [totalBalance, setTotalBalance] = useState<string>();
 
   useEffect(() => {
     if (!library) return;
@@ -43,7 +44,10 @@ export function Asset(props: AssetProps): ReactElement {
     if (!contract) return;
 
     const loadData = async () => {
-      setName(await contract.getName());
+      await Promise.all([
+        contract.getName().then(name => { setName(name) }),
+        contract.getTotalBalance().then(totalBalance => { setTotalBalance(ethers.utils.formatEther(totalBalance)) })
+      ]);
     };
 
     loadData().catch(console.error);
@@ -64,6 +68,12 @@ export function Asset(props: AssetProps): ReactElement {
           </Grid>
           <Grid item xs={6}>
             {name}
+          </Grid>
+          <Grid item xs={6}>
+            Total balance:
+          </Grid>
+          <Grid item xs={6}>
+            {totalBalance}
           </Grid>
         </Grid>
       </CardContent>

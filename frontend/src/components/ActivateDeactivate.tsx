@@ -111,7 +111,7 @@ export function ActivateDeactivate(): ReactElement {
       ?.then(address => {
         setSelfAddress(address);
       })
-  }, [account]);
+  }, [library, account]);
 
   return (
     <Stack direction="row" justifyContent="flex-end" spacing={2}>
