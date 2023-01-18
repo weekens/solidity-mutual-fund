@@ -98,6 +98,12 @@ export function MutualFund(): ReactElement {
         setLastUpdateTimestamp(new Date().getTime());
       });
 
+      mutualFundContract.on("Exit", (memberAddress, percentage, toReturn) => {
+        console.log(
+          ">> Exit event! memberAddress =", memberAddress, ", percentage =", percentage, ", toReturn =", toReturn);
+        setLastUpdateTimestamp(new Date().getTime());
+      });
+
       setContract(mutualFundContract as unknown as MutualFundContract);
     }
 

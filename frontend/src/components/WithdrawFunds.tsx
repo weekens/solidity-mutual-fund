@@ -49,7 +49,7 @@ export function WithdrawFunds(): ReactElement {
     }
 
     loadContract().catch(console.error);
-  }, [signer]);
+  }, [signer, contractAddress]);
 
   function handleWithdrawFundsClick() {
     setModalOpen(true);
