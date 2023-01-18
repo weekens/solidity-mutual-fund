@@ -88,6 +88,7 @@ function Deactivate(): ReactElement {
 
   return (
     <Button
+      variant="outlined"
       disabled={!active}
       onClick={handleDeactivate}
     >
