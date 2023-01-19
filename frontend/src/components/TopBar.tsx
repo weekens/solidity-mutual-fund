@@ -1,12 +1,8 @@
 import { AbstractConnector } from "@web3-react/abstract-connector";
 import { UnsupportedChainIdError, useWeb3React } from "@web3-react/core";
-import {
-  NoEthereumProviderError,
-  UserRejectedRequestError
-} from "@web3-react/injected-connector";
+import { NoEthereumProviderError, UserRejectedRequestError } from "@web3-react/injected-connector";
 import { MouseEvent, ReactElement, useEffect, useState } from "react";
 import { injected } from "../utils/connectors";
-import { useEagerConnect, useInactiveListener } from "../utils/hooks";
 import { Provider } from "../utils/provider";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -56,14 +52,6 @@ function Activate(): ReactElement {
 
     _activate(activate);
   }
-
-  // handle logic to eagerly connect to the injected ethereum provider, if it exists and has
-  // granted access already
-  const eagerConnectionSuccessful = useEagerConnect();
-
-  // handle logic to connect in reaction to certain events on the injected ethereum provider,
-  // if it exists
-  useInactiveListener(!eagerConnectionSuccessful);
 
   return (
     <Button

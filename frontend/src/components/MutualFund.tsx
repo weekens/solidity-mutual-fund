@@ -16,6 +16,9 @@ import { ProposalList } from "./ProposalList";
 import { NewProposal } from "./NewProposal";
 import { MutualFundContract } from "../MutualFundContract";
 import { AssetList } from "./AssetList";
+import { TopBar } from "./TopBar";
+import Container from "@mui/material/Container";
+import { useEagerConnect, useInactiveListener } from "../utils/hooks";
 
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
 
@@ -53,6 +56,14 @@ function tabProps(index: number) {
 }
 
 export function MutualFund(): ReactElement {
+  // handle logic to eagerly connect to the injected ethereum provider, if it exists and has
+  // granted access already
+  const eagerConnectionSuccessful = useEagerConnect();
+
+  // handle logic to connect in reaction to certain events on the injected ethereum provider,
+  // if it exists
+  useInactiveListener(!eagerConnectionSuccessful);
+
   const context = useWeb3React<Provider>();
   const { library, account } = context;
 
@@ -163,38 +174,45 @@ export function MutualFund(): ReactElement {
     return (<></>);
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs value={tabIndex} onChange={handleTabChange} aria-label="basic tabs example">
-          <Tab label="Home" {...tabProps(0)} />
-          <Tab label="Members" {...tabProps(1)} />
-          <Tab label="Proposals" {...tabProps(2)} />
-          <Tab label="Assets" {...tabProps(3)} />
-        </Tabs>
-      </Box>
-      <TabPanel value={tabIndex} index={0}>
-        <AccountInfo totalBalance={totalBalance} member={selfMember} />
-      </TabPanel>
-      <TabPanel value={tabIndex} index={1}>
-        <Stack gap="15px">
-        {
-          members.map((member) => {
-            return (
-              <Member key={member.addr} model={member} totalBalance={totalBalance} />
-            )
-          })
-        }
-        </Stack>
-      </TabPanel>
-      <TabPanel index={tabIndex} value={2}>
-        <Stack>
-          <NewProposal contract={contract} />
-          <ProposalList proposals={proposals} contract={contract} />
-        </Stack>
-      </TabPanel>
-      <TabPanel index={tabIndex} value={3}>
-        <AssetList assetAddresses={assetAddresses} />
-      </TabPanel>
-    </Box>
+    <Stack>
+      <Typography>
+        <TopBar />
+      </Typography>
+      <Container>
+        <Box sx={{ width: "100%" }}>
+          <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+            <Tabs value={tabIndex} onChange={handleTabChange} aria-label="basic tabs example">
+              <Tab label="Home" {...tabProps(0)} />
+              <Tab label="Members" {...tabProps(1)} />
+              <Tab label="Proposals" {...tabProps(2)} />
+              <Tab label="Assets" {...tabProps(3)} />
+            </Tabs>
+          </Box>
+          <TabPanel value={tabIndex} index={0}>
+            <AccountInfo totalBalance={totalBalance} member={selfMember} />
+          </TabPanel>
+          <TabPanel value={tabIndex} index={1}>
+            <Stack gap="15px">
+              {
+                members.map((member) => {
+                  return (
+                    <Member key={member.addr} model={member} totalBalance={totalBalance} />
+                  )
+                })
+              }
+            </Stack>
+          </TabPanel>
+          <TabPanel index={tabIndex} value={2}>
+            <Stack>
+              <NewProposal contract={contract} />
+              <ProposalList proposals={proposals} contract={contract} />
+            </Stack>
+          </TabPanel>
+          <TabPanel index={tabIndex} value={3}>
+            <AssetList assetAddresses={assetAddresses} />
+          </TabPanel>
+        </Box>
+      </Container>
+    </Stack>
   );
 }
