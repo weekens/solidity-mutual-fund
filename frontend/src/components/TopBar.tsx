@@ -8,6 +8,7 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import { BlockchainAddress } from "./BlockchainAddress";
 import { WithdrawFunds } from "./WithdrawFunds";
+import { MemberModel } from "../models/MemberModel";
 
 type ActivateFunction = (
   connector: AbstractConnector,
@@ -85,7 +86,11 @@ function Deactivate(): ReactElement {
   );
 }
 
-export function TopBar(): ReactElement {
+export interface TopBarProps {
+  selfMember?: MemberModel;
+}
+
+export function TopBar(props: TopBarProps): ReactElement {
   const context = useWeb3React<Provider>();
   const { library, account, error, active } = context;
   const [selfAddress, setSelfAddress] = useState<string>();
@@ -113,9 +118,9 @@ export function TopBar(): ReactElement {
         (<></>)
       }
       {
-        active
+        active && !!props.selfMember
         ?
-        <WithdrawFunds />
+        <WithdrawFunds selfMember={props.selfMember} />
         :
         (<></>)
       }

@@ -168,15 +168,34 @@ export function MutualFund(): ReactElement {
   }
 
   if (!contract)
-    return (<></>);
+    return (
+      <Stack>
+        <Typography>
+          <TopBar />
+        </Typography>
+      </Stack>
+    );
 
   if (!selfMember)
-    return (<></>);
+    return (
+      <Stack>
+        <Typography>
+          <TopBar />
+        </Typography>
+        <Container>
+          <Box sx={{ width: "100%" }}>
+            <Typography>
+              <h2>You are not a member of this fund, so you cannot view its data. 🤷‍♂️</h2>
+            </Typography>
+          </Box>
+        </Container>
+      </Stack>
+    );
 
   return (
     <Stack>
       <Typography>
-        <TopBar />
+        <TopBar selfMember={selfMember}/>
       </Typography>
       <Container>
         <Box sx={{ width: "100%" }}>

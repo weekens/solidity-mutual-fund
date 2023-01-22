@@ -16,11 +16,17 @@ import { useWeb3React } from "@web3-react/core";
 import { Provider } from "../utils/provider";
 import { ethers, Signer } from "ethers";
 import MutualFundArtifact from "../contracts/MutualFund.sol/MutualFund.json"
+import { MemberModel } from "../models/MemberModel";
 
-export function WithdrawFunds(): ReactElement {
+export interface WithdrawFundsProps {
+  selfMember?: MemberModel;
+}
+
+export function WithdrawFunds(props: WithdrawFundsProps): ReactElement {
   const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || "";
   const context = useWeb3React<Provider>();
   const { library, account } = context;
+  const selfBalance = props.selfMember?.balance;
 
   const [signer, setSigner] = useState<Signer>();
   const [contract, setContract] = useState<MutualFundContract>();
@@ -105,7 +111,13 @@ export function WithdrawFunds(): ReactElement {
 
   return (
     <>
-      <Button variant="contained" color="error" onClick={handleWithdrawFundsClick}>Withdraw funds</Button>
+      <Button
+        variant="contained"
+        color="error"
+        disabled={!selfBalance || selfBalance.eq(0) }
+        onClick={handleWithdrawFundsClick}>
+        Withdraw funds
+      </Button>
       <Dialog open={modalOpen} onClose={handleClose}>
         <DialogTitle>Withdraw Funds</DialogTitle>
         <DialogContent>
