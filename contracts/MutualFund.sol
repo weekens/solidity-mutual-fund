@@ -82,6 +82,10 @@ contract MutualFund {
         uniswapRouter2 = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     }
 
+    function getConfiguration() public view returns (Configuration memory) {
+        return configuration;
+    }
+
     function getMembers() public view returns (Member[] memory) {
         return members;
     }
