@@ -1,4 +1,5 @@
 import { BigNumber, ContractTransaction } from "ethers";
+import { ConfigurationModel } from "./models/ConfigurationModel";
 import { MemberModel } from "./models/MemberModel";
 import { ProposalModel } from "./models/ProposalModel";
 import { ProposalSubmissionModel } from "./models/ProposalSubmissionModel";
@@ -12,6 +13,8 @@ export interface MutualFundContract {
   getProposals(): Promise<ProposalModel[]>;
 
   getAssets(): Promise<string[]>;
+
+  getConfiguration(): Promise<ConfigurationModel>;
 
   submitProposal(proposal: ProposalSubmissionModel): Promise<ContractTransaction>;
 

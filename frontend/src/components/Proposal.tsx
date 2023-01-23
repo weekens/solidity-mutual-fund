@@ -33,6 +33,8 @@ import { BlockchainAddress } from "./BlockchainAddress";
 import { proposalTypeToString } from "../models/ProposalType";
 import { useWeb3React } from "@web3-react/core";
 import { Provider } from "../utils/provider";
+import { ConfigurationModel } from "../models/ConfigurationModel";
+import { MemberModel } from "../models/MemberModel";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -43,18 +45,21 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 
 export interface ProposalProps {
   model: ProposalModel;
+  members: MemberModel[];
   contract: MutualFundContract;
 }
 
 export function Proposal(props: ProposalProps): ReactElement {
   const yesVotes = props.model.votes.filter(v => v.support);
   const noVotes = props.model.votes.filter(v => !v.support);
+  const everyoneVoted = props.model.votes.length === props.members.length;
 
   const context = useWeb3React<Provider>();
   const { library, account } = context;
 
   const [signer, setSigner] = useState<Signer>();
   const [signerAddress, setSignerAddress] = useState<string>();
+  const [configuration, setConfiguration] = useState<ConfigurationModel>();
   const [canExecute, setCanExecute] = useState<boolean>(false);
   const [canVote, setCanVote] = useState<boolean>(false);
   const [canNotExecuteReason, setCanNotExecuteReason] = useState<string>("");
@@ -83,7 +88,15 @@ export function Proposal(props: ProposalProps): ReactElement {
         setCanExecute(response[0]);
         setCanNotExecuteReason(response[1]);
       })
-      .catch(console.error)
+      .catch(console.error);
+
+    props
+      .contract
+      .getConfiguration()
+      .then(response => {
+        setConfiguration(response);
+      })
+      .catch(console.error);
   }, [signerAddress, props.contract, props.model.id]);
 
   useEffect(() => {
@@ -161,6 +174,23 @@ export function Proposal(props: ProposalProps): ReactElement {
     setVoteSuccessSnackbarOpen(false);
   }
 
+  if (!configuration) return (<></>);
+
+  let graceTimestampElement: ReactElement | undefined = undefined;
+
+  if (!everyoneVoted || noVotes.length > 0) {
+    graceTimestampElement = (
+      <>
+        <Grid item xs={6}>
+          Grace period ends at:
+        </Grid>
+        <Grid item xs={6}>
+          <BlockTimestamp data={props.model.createdAt.add(configuration.votingPeriod).add(configuration.gracePeriod)} />
+        </Grid>
+      </>
+    );
+  }
+
   return (
     <Card>
       <CardContent>
@@ -178,6 +208,31 @@ export function Proposal(props: ProposalProps): ReactElement {
             <Grid item xs={6}>
               <BlockTimestamp data={props.model.createdAt} />
             </Grid>
+            <Grid item xs={6}>
+              Expires at:
+            </Grid>
+            <Grid item xs={6}>
+              <BlockTimestamp data={props.model.createdAt.add(configuration.proposalExpiryPeriod)} />
+            </Grid>
+            {
+              !everyoneVoted
+              ?
+              (
+                <>
+                  <Grid item xs={6}>
+                    Voting ends at:
+                  </Grid>
+                  <Grid item xs={6}>
+                    <BlockTimestamp data={props.model.createdAt.add(configuration.votingPeriod)} />
+                  </Grid>
+                </>
+              )
+              :
+              (<></>)
+            }
+            {
+              graceTimestampElement || (<></>)
+            }
             <Grid item xs={6}>
               Type:
             </Grid>
