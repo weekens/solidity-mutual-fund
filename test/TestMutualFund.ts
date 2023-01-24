@@ -509,7 +509,58 @@ describe("MutualFund", function () {
             .to.be.revertedWith("Proposal has expired");
     });
 
-    it("should prohibit voting after voting period");
+    it("should prohibit voting after voting period", async () => {
+        const MutualFund = await ethers.getContractFactory("MutualFund");
+        const fund = await MutualFund.deploy({
+            votingPeriod: 2 * 60 * 60,
+            gracePeriod: 60 * 60,
+            proposalExpiryPeriod: defaultFundConfig().proposalExpiryPeriod,
+            founderName: "admin"
+        });
+        const [founder, member1, member2] = await ethers.getSigners();
+
+        await depositFunds(fund, founder.address, 10000);
+
+        // Add new member.
+        const memberProposalId = await submitProposal(fund, founder.address, {
+            proposalType: ProposalType.AddMember,
+            name: "member1",
+            amount: 0,
+            addresses: [member1.address]
+        });
+        await executeProposal(fund, founder.address, memberProposalId);
+
+        // Now we submit another member proposal.
+        const member2ProposalId = await submitProposal(
+          fund,
+          founder.address,
+          {
+              proposalType: ProposalType.AddMember,
+              name: "member2",
+              amount: 0,
+              addresses: [member2.address]
+          }
+        );
+
+        // Wait for voting period to pass.
+        await time.increase(2 * 60 * 60 + 10 * 60);
+
+        await expect(
+          voteAgainstProposal(fund, member1.address, member2ProposalId)
+        ).to.be.revertedWith("Voting period has passed");
+
+        // Try to execute proposal; should fail because not everyone voted, and the grace period has not passed.
+        await expect(executeProposal(fund, founder.address, member2ProposalId))
+          .to.be.revertedWith("Voting or grace period is in progress");
+
+        // Wait for grace period to pass.
+        await time.increase(60 * 60);
+
+        // Now the proposal should be successfully executed.
+        await executeProposal(fund, founder.address, member2ProposalId);
+        const members = await fund.getMembers();
+        expect(members).to.have.lengthOf(3);
+    });
 
     it("should allow changing voting period and grace period", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
