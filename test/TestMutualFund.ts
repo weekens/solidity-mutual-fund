@@ -309,7 +309,81 @@ describe("MutualFund", function () {
 
     it("should exit proportionally having multiple assets");
 
-    it("should take the size of the shares into account during voting");
+    it("should take the size of the shares into account during voting", async () => {
+        const MutualFund = await ethers.getContractFactory("MutualFund");
+        const fund = await MutualFund.deploy({
+            votingPeriod: 2 * 60 * 60,
+            gracePeriod: 60 * 60,
+            proposalExpiryPeriod: defaultFundConfig().proposalExpiryPeriod,
+            founderName: "admin"
+        });
+        const [founder, member1, member2] = await ethers.getSigners();
+
+        await depositFunds(fund, founder.address, 10000);
+
+        // Add new member.
+        const memberProposalId = await submitProposal(fund, founder.address, {
+            proposalType: ProposalType.AddMember,
+            name: "member1",
+            amount: 0,
+            addresses: [member1.address]
+        });
+        await executeProposal(fund, founder.address, memberProposalId);
+
+        // member1 should now be able to deposit funds.
+
+        const depositProposalId = await submitProposal(
+          fund,
+          member1.address,
+          {
+              proposalType: ProposalType.DepositFunds,
+              amount: 1000,
+              addresses: [],
+              name: ""
+          }
+        );
+        await voteForProposal(fund, founder.address, depositProposalId);
+        await fund.connect(await ethers.getSigner(member1.address)).executeProposal(
+          depositProposalId,
+          {
+              value: 1000
+          }
+        );
+
+        // Now we submit another member proposal.
+        const member2ProposalId = await submitProposal(
+          fund,
+          founder.address,
+          {
+              proposalType: ProposalType.AddMember,
+              name: "member2",
+              amount: 0,
+              addresses: [member2.address]
+          }
+        );
+
+        await voteAgainstProposal(fund, member1.address, member2ProposalId);
+
+        // Try to execute proposal; should fail because there is a negative vote, and the voting period has not passed.
+        await expect(executeProposal(fund, founder.address, member2ProposalId))
+          .to.be.revertedWith("Grace period is in progress");
+
+        // Wait for voting period to pass.
+        await time.increase(2 * 60 * 60 + 10 * 60);
+
+        // Try to execute proposal; should fail because there is a negative vote, and the grace period has not passed.
+        await expect(executeProposal(fund, founder.address, member2ProposalId))
+          .to.be.revertedWith("Grace period is in progress");
+
+        // Wait for grace period to pass.
+        await time.increase(60 * 60);
+
+        // Now the proposal should be successfully executed, because founder has voted positively, and he has a
+        // bigger number of shares.
+        await executeProposal(fund, founder.address, member2ProposalId);
+        const members = await fund.getMembers();
+        expect(members).to.have.lengthOf(3);
+    });
 
     it("should prohibit executing a proposal more than once", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
@@ -391,8 +465,7 @@ describe("MutualFund", function () {
             .to.be.revertedWith("Voting or grace period is in progress");
 
         // Wait for voting period to pass.
-        await ethers.provider.send("evm_increaseTime", [2 * 60 * 60 + 10 * 60]);
-        await ethers.provider.send("evm_mine", []);
+        await time.increase(2 * 60 * 60 + 10 * 60);
 
         // Try to execute proposal; should fail because not everyone has voted, and the grace period has not passed.
         await expect(
