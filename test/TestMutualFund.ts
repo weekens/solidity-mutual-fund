@@ -309,7 +309,7 @@ describe("MutualFund", function () {
 
     it("should exit proportionally having multiple assets");
 
-    it("should take the size of the shares into account during voting", async () => {
+    it("should take the size of the shares into account during voting and allow grace period", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const fund = await MutualFund.deploy({
             votingPeriod: 2 * 60 * 60,
@@ -508,8 +508,6 @@ describe("MutualFund", function () {
             ))
             .to.be.revertedWith("Proposal has expired");
     });
-
-    it("should allow a grace period if there were negative votes");
 
     it("should prohibit voting after voting period");
 
