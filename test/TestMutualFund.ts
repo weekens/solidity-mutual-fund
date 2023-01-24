@@ -311,7 +311,23 @@ describe("MutualFund", function () {
 
     it("should take the size of the shares into account during voting");
 
-    it("should prohibit executing a proposal more than once");
+    it("should prohibit executing a proposal more than once", async () => {
+        const MutualFund = await ethers.getContractFactory("MutualFund");
+        const fund = await MutualFund.deploy(defaultFundConfig());
+        const [founder, member1] = await ethers.getSigners();
+
+        const memberProposalId = await submitProposal(fund, founder.address, {
+            proposalType: ProposalType.AddMember,
+            name: "member1",
+            amount: 0,
+            addresses: [member1.address]
+        });
+
+        await executeProposal(fund, founder.address, memberProposalId);
+
+        await expect(executeProposal(fund, founder.address, memberProposalId))
+          .to.be.revertedWith("Proposal not found");
+    });
 
     it("should allow partial voting", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
