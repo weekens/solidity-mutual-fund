@@ -118,13 +118,36 @@ The default implementation of an *asset* resides in the
  with the following initialization parameters:
 
 - `initTokenAddress`: address of a token in the Ethereum blockchain
-- `initFundAddress`: address of a fund that will own this asset (certain operations on an asset can only 
+- `initFundAddress`: address of a fund that will own this asset (certain operations on an asset can only
   be performed by an owning fund and nobody else)
 - `initName`: name of this asset (normally equals to the token name or symbol)
 
 Once the *asset* is deployed, it can be added to the fund by means of an `AddAsset` proposal, where the
  `addresses` parameter contains the address of a deployed *asset* contract as the first and the only
  parameter.
+
+#### `Swap`
+
+Transferring funds between the *assets* by means of converting one token to another is how a fund actually
+ implements its investment strategy.
+This transfer and conversion is performed by executing a `Swap` proposal.
+
+A `Swap` proposal takes the amount of funds specified in the `amount` parameter from the *asset* with the
+ first address in the `addresses` parameter and converts them into the token of the *asset* with the second
+ address in the `addresses` parameter by using the [Uniswap](https://uniswap.org/) DEX smart contract.
+
+For example, the *members* may decide to spend 50% of the money in the fund to buy a SushiSwap token (SUSHI).
+To do this, they:
+1. Deploy an *asset* that points to the address of SUSHI token
+ (`0x6B3595068778DD592e39A122f4f5a5cF09C90fE2` in Mainnet).
+2. Add the SUSHI *asset* to the fund by executing an `AddAsset` proposal.
+3. Execute a `Swap` proposal with the following parameters:
+   - `amount` = actual value that corresponds to the 50% of the funds in ETH
+   - `addresses`: first address = address of the fund itself; second address = address of the SUSHI *asset*
+
+If the price in ETH of a purchased token grows over time, the fund gains money; if it shrinks, the fund 
+ looses.
+But the amount of tokens each *member* owns remains unchanged.
 
 ### Exits
 
