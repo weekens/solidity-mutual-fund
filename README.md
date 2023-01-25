@@ -142,12 +142,23 @@ To do this, they:
  (`0x6B3595068778DD592e39A122f4f5a5cF09C90fE2` in Mainnet).
 2. Add the SUSHI *asset* to the fund by executing an `AddAsset` proposal.
 3. Execute a `Swap` proposal with the following parameters:
-   - `amount` = actual value that corresponds to the 50% of the funds in ETH
-   - `addresses`: first address = address of the fund itself; second address = address of the SUSHI *asset*
+  - `amount` = actual value that corresponds to the 50% of the funds in ETH
+  - `addresses`: first address = address of the fund itself; second address = address of the SUSHI *asset*
 
-If the price in ETH of a purchased token grows over time, the fund gains money; if it shrinks, the fund 
+If the price in ETH of a purchased token grows over time, the fund gains money; if it shrinks, the fund
  looses.
 But the amount of tokens each *member* owns remains unchanged.
+
+#### `KickMember`
+
+The *members* may decide to remove a certain *member* from the fund by means of submitting a `KickMember`
+ *proposal*, *voting* for this *proposal*, and executing it.
+
+The funds the kicked *member* owns are automatically returned to this member according to the share of tokens
+ he/she owns (the full *exit* is done).
+
+A `KickMember` *proposal* expects the address of the kicked *member* as a first and only address in the
+ `addresses` parameter.
 
 ### Exits
 
