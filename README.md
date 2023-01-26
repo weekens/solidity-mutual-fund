@@ -163,7 +163,7 @@ The funds the kicked *member* owns are automatically returned to this member acc
 A `KickMember` *proposal* expects the address of the kicked *member* as a first and only address in the
  `addresses` parameter.
 
-### `ChangeVotingPeriod`, `ChangeGracePeriod`, `ChangeProposalExpiryPeriod`
+#### `ChangeVotingPeriod`, `ChangeGracePeriod`, `ChangeProposalExpiryPeriod`
 
 These types of *proposals* change the current configuration of the fund, interpreting a value in the
  `amount` parameter as a number of seconds and applying it to the respective configuration parameter.
