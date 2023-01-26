@@ -41,7 +41,7 @@ During the initial deployment, the fund is initialized with a `Configuration` ob
 - `proposalExpiryPeriod`: time in seconds after a *proposal* submission, when a *proposal* gets expired
 - `votingPeriod`: time in seconds after a *proposal* submission during which the *voting* is open
 - `gracePeriod`: time in seconds after the end of voting on a *proposal* during which the proposal execution
- is blocked; *members* who have voted negatively or restrained have the possibility of a full or partial 
+ is blocked; *members* who have voted negatively or refrained have the possibility of a full or partial 
  *exit* during that time
 - `founderName`: visual name of the *founder* of a fund
 
@@ -184,5 +184,24 @@ The *exit* may be full (take 100% of owned funds) or partial (take less than 100
 After a full *exit*, an exiting *member* is automatically kicked from the fund.
 
 ### Voting
+
+A submitted *proposal* can only be executed after it successfully passes the *voting* procedure.
+For this to happen, the following condition must be reached: after a voting period, the sum of the *tokens* of
+ the *members* who have voted positively must be greater than the sum of the *tokens* of the *members* who
+ voted negatively.
+
+A *proposal* author - a *member* who has submitted a *proposal* - is automatically recorded as a positive
+ voter for this *proposal*.
+Other members are not required to vote and may refrain.
+
+If all *members* have submitted votes for a *proposal* a voting period ends automatically.
+
+If all *members* have submitted votes for a *proposal* and all votes are positive, there is no grace period
+ for this proposal.
+
+If some *members* have refrained or there is at least one negative vote, a grace period takes place after
+ a voting period.
+During the grace period a *proposal* cannot be executed, and *members* have the chance to *exit* fully
+ or partially.
 
 ## Development
