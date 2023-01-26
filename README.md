@@ -57,6 +57,9 @@ Any *member* can submit a *proposal*, which can later be executed if it gets app
 
 Any *proposal* can only be executed by its author.
 
+A proposal is submitted with the `submitProposal` contract function, and is executed with the
+ `executeProposal` contract function.
+
 A *proposal* has the following parameters:
 
 - `proposalType`: type of proposal (see below)
@@ -183,6 +186,8 @@ The *exit* may be full (take 100% of owned funds) or partial (take less than 100
 
 After a full *exit*, an exiting *member* is automatically kicked from the fund.
 
+The *exit* is performed by the `exit` contract function.
+
 ### Voting
 
 A submitted *proposal* can only be executed after it successfully passes the *voting* procedure.
@@ -203,5 +208,7 @@ If some *members* have refrained or there is at least one negative vote, a grace
  a voting period.
 During the grace period a *proposal* cannot be executed, and *members* have the chance to *exit* fully
  or partially.
+
+The *voting* is done with the `vote` contract function.
 
 ## Development
