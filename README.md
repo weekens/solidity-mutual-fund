@@ -167,4 +167,22 @@ These types of *proposals* change the current configuration of the fund, interpr
 
 ### Exits
 
+Any *member* can withdraw their money from the fund at any time (this is called *exit*).
+No approval from other *members* is required for that.
+
+The amount of funds that can be withdrawn with the *exit* is determined by the amount of tokens a *member*
+ has.
+This is done the following way:
+
+1. The amount of *member's* *tokens* is divided by the total amount of *tokens* in the fund resulting in the
+ fraction F.
+2. In each of the fund's *assets*, a *member* owns the fraction F of the total amount of tokens.
+3. In the fund itself, a *member* owns the fraction F of the total amount of ETH.
+
+The *exit* may be full (take 100% of owned funds) or partial (take less than 100% of owned funds).
+
+After a full *exit*, an exiting *member* is automatically kicked from the fund.
+
 ### Voting
+
+## Development
