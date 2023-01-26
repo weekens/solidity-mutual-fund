@@ -212,3 +212,27 @@ During the grace period a *proposal* cannot be executed, and *members* have the 
 The *voting* is done with the `vote` contract function.
 
 ## Development
+
+To initialize the project repository for development, run the `npm ci` command in the root directory and in
+ the `frontend` directory.
+
+To execute the tests for the smart contract, run:
+
+```bash
+npm test
+```
+
+To deploy the smart contract to the Goerli Testnet:
+
+1. Create a `.env` file in the root directory of the project.
+2. Configure the `API_URL=your_alchemy_api_url` and `PRIVATE_KEY=your_ethereum_wallet_private_key` in
+ `.env` file.
+3. Run `npm run deploy-contracts-testnet`; the address of the deployed contract will be printed to the 
+ console.
+
+To start the Web3 UI in the development mode:
+
+1. Create a `.env` file in the `frontend` directory of the project.
+2. Configure the `REACT_APP_CONTRACT_ADDRESS=deployed_contract_address` in the `.env` file of the `frontend`
+ directory.
+3. Run `npm start` in the `frontend` directory or in the root directory of the project.
