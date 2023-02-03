@@ -12,7 +12,7 @@ The agreement (full or partial) between the members is achieved by means of *vot
 The voting power of each member is determined by the amount of funds a member has deposited.
 
 The smart contract guarantees each member the possibility to withdraw the deposited funds fully or partially
- at time without other member's agreement.
+ at any time without other member's agreement.
 
 ## Structure of the project
 
