@@ -5,7 +5,7 @@ async function main() {
 
   const fund = await MutualFundAsset.deploy(
     "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984",
-    "0x7d3c358D7032d9749483aDA96595EcC6BC722E13",
+    "0xDE466BC4b09C36dc9a53DA55ED0033E5cE4410f5",
     "UNI"
   );
   console.log("Asset contract deployed to address:", fund.address);

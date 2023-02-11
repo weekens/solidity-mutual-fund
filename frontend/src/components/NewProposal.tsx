@@ -99,6 +99,7 @@ export function NewProposal(props: NewProposalProps): ReactElement {
 
   function reset() {
     setProposalType(ProposalType.DepositFunds);
+    setName("");
     setAmount("");
     setAddress("");
     setAddress2("");
