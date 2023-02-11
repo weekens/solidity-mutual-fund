@@ -34,10 +34,22 @@ export function proposalTypeToString(t: ProposalType): string {
     case ProposalType.DepositFunds:
       return "Deposit Funds";
 
+    case ProposalType.AddAsset:
+      return "Add Asset";
+
+    case ProposalType.Swap:
+      return "Swap";
+
     case ProposalType.AddMember:
       return "Add Member";
 
-    default:
-      return t.toString();
+    case ProposalType.KickMember:
+      return "Kick Member";
+
+    case ProposalType.ChangeGracePeriod:
+      return "Change Grace Period";
+
+    case ProposalType.ChangeVotingPeriod:
+      return "Change Voting Period";
   }
 }
