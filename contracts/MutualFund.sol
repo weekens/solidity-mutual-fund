@@ -72,14 +72,14 @@ contract MutualFund {
     uint private proposalIdCounter = 1;
     Proposal[] private proposals;
     IAsset[] private assets;
-    IUniswapV2Router01 private uniswapRouter;
-    IUniswapV2Router02 private uniswapRouter2;
+    IUniswapV2Router01 private constant uniswapRouter =
+        IUniswapV2Router01(0xf164fC0Ec4E93095b804a4795bBe1e041497b92a);
+    IUniswapV2Router02 private constant uniswapRouter2 =
+        IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
     constructor(Configuration memory config) {
         configuration = config;
         members.push(Member({ name: config.founderName, addr: msg.sender, balance: 0 }));
-        uniswapRouter = IUniswapV2Router01(0xf164fC0Ec4E93095b804a4795bBe1e041497b92a);
-        uniswapRouter2 = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     }
 
     function getConfiguration() public view returns (Configuration memory) {
@@ -187,15 +187,7 @@ contract MutualFund {
 
         if (addr1 == address(this)) {
             IAsset asset = findAssetByAddress(addr2);
-            address[] memory path = new address[](2);
-            path[0] = uniswapRouter.WETH();
-            path[1] = asset.getTokenAddress();
-            uniswapRouter.swapExactETHForTokens{ value: request.amount }(
-                0,
-                path,
-                addr2,
-                block.timestamp + 60 * 60
-            );
+            asset.depositEth{ value: request.amount }();
         }
         else if (addr2 == address(this)) {
             revert("Not implemented yet.");

@@ -15,4 +15,7 @@ interface IAsset {
 
     // Approves a spender to spend a given amount from this asset's balance according to ERC20.
     function approve(address spender, uint256 amount) external returns (bool);
+
+    // Deposits a given amount of ETH from an owning fund to this asset.
+    function depositEth() external payable;
 }
