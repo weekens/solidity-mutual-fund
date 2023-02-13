@@ -89,16 +89,20 @@ export function WithdrawFunds(props: WithdrawFundsProps): ReactElement {
 
     if (!contract || isNaN(parsedAmount)) return;
 
-    const txn = await contract.exit(parsedAmount);
+    try {
+      const txn = await contract.exit(parsedAmount);
 
-    setWithdrawSnackbarOpen(true);
+      setWithdrawSnackbarOpen(true);
 
-    await txn.wait();
+      await txn.wait();
 
-    setWithdrawSnackbarOpen(false);
-    setWithdrawSuccessSnackbarOpen(true);
+      setWithdrawSnackbarOpen(false);
+      setWithdrawSuccessSnackbarOpen(true);
 
-    reset();
+      reset();
+    } catch (err) {
+      alert(err);
+    }
   }
 
   function handleWithdrawSnackbarClose() {

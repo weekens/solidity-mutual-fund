@@ -105,22 +105,26 @@ export function Proposal(props: ProposalProps): ReactElement {
 
   async function handleExecuteProposalClick() {
     if (!canExecute) {
-      console.warn("Cannot execute proposal:", canNotExecuteReason);
+      alert("Cannot execute proposal: " + canNotExecuteReason);
       return;
     }
 
     console.info("Executing proposal:", props.model.id);
 
-    const proposalTxn = await props.contract.executeProposal(props.model.id, {
-      value: props.model.request.amount
-    });
+    try {
+      const proposalTxn = await props.contract.executeProposal(props.model.id, {
+        value: props.model.request.amount
+      });
 
-    setExecuteSnackbarOpen(true);
+      setExecuteSnackbarOpen(true);
 
-    await proposalTxn.wait();
+      await proposalTxn.wait();
 
-    setExecuteSnackbarOpen(false);
-    setExecuteSuccessSnackbarOpen(true);
+      setExecuteSnackbarOpen(false);
+      setExecuteSuccessSnackbarOpen(true);
+    } catch (err) {
+      alert(err);
+    }
   }
 
   async function handleVoteForProposalClick() {
@@ -132,14 +136,18 @@ export function Proposal(props: ProposalProps): ReactElement {
   }
 
   async function handleVoteClick(support: boolean) {
-    const voteTxn = await props.contract.vote(props.model.id, support);
+    try {
+      const voteTxn = await props.contract.vote(props.model.id, support);
 
-    setVoteSnackbarOpen(true);
+      setVoteSnackbarOpen(true);
 
-    await voteTxn.wait();
+      await voteTxn.wait();
 
-    setVoteSnackbarOpen(false);
-    setVoteSuccessSnackbarOpen(true);
+      setVoteSnackbarOpen(false);
+      setVoteSuccessSnackbarOpen(true);
+    } catch (err) {
+      alert(err)
+    }
   }
 
   function handleExecuteSnackbarClose(event: SyntheticEvent | Event, reason?: string) {
@@ -261,7 +269,11 @@ export function Proposal(props: ProposalProps): ReactElement {
           <Accordion sx={{ width: "100%" }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <span>Votes</span>
-              <Chip size="small" label={"Total: " + props.model.votes.length} sx={{ marginLeft: "15px" }}/>
+              <Chip
+                  size="small"
+                  label={"Total: " + props.model.votes.length + " of " + props.members.length}
+                  sx={{ marginLeft: "15px" }}
+              />
               {
                 (yesVotes.length > 0)
                   ?

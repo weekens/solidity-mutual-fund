@@ -63,25 +63,29 @@ export function NewProposal(props: NewProposalProps): ReactElement {
   async function handleSubmit() {
     setModalOpen(false);
 
-    if (proposalType !== undefined) {
-      if (!amount || !address) return;
+    try {
+      if (proposalType !== undefined) {
+        if (!amount || !address) return;
 
-      const proposalTxn = await props.contract.submitProposal({
-        proposalType: proposalType.valueOf(),
-        name: name,
-        amount: ethers.utils.parseEther(amount),
-        addresses: [ethers.utils.getAddress(address)].concat(!!address2 ? ethers.utils.getAddress(address2) : [])
-      });
+        const proposalTxn = await props.contract.submitProposal({
+          proposalType: proposalType.valueOf(),
+          name: name,
+          amount: ethers.utils.parseEther(amount),
+          addresses: [ethers.utils.getAddress(address)].concat(!!address2 ? ethers.utils.getAddress(address2) : [])
+        });
 
-      setSubmitSnackbarOpen(true);
+        setSubmitSnackbarOpen(true);
 
-      await proposalTxn.wait();
+        await proposalTxn.wait();
 
-      setSubmitSnackbarOpen(false);
-      setNewProposalSnackbarOpen(true);
+        setSubmitSnackbarOpen(false);
+        setNewProposalSnackbarOpen(true);
+      }
+
+      reset();
+    } catch (err) {
+      alert(err);
     }
-
-    reset();
   }
 
   function isValidEtherAmount(amount: string): boolean {
