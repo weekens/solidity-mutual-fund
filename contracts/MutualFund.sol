@@ -243,23 +243,7 @@ contract MutualFund {
 
                 if (assetTotalBalance > 0) {
                     uint toReturnFromAsset = ABDKMath64x64.divu(balanceToBurn, totalBalance).mulu(assetTotalBalance);
-                    address tokenAddress = assets[i].getTokenAddress();
-                    assets[i].approve(address(this), toReturnFromAsset);
-                    // Move funds to this contract to be able to make a swap.
-                    IERC20(tokenAddress).transferFrom(address(assets[i]), address(this), toReturnFromAsset);
-                    // Approve the Uniswap Router to spend the funds from this contract's address.
-                    IERC20(tokenAddress).approve(address(uniswapRouter2), toReturnFromAsset);
-
-                    address[] memory path = new address[](2);
-                    path[0] = tokenAddress;
-                    path[1] = uniswapRouter.WETH();
-                    uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                        toReturnFromAsset,
-                        0,
-                        path,
-                        payable(memberAddress),
-                        block.timestamp + 60 * 60
-                    );
+                    assets[i].withdrawEth(toReturnFromAsset, payable(memberAddress));
                 }
             }
 

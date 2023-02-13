@@ -307,6 +307,8 @@ describe("MutualFund", function () {
         expect(signerBalanceAfterPartialExit.gt(signerBalanceAfterDeposit.sub(partialExitGasUsed))).to.be.true;
     });
 
+    it("should be able to swap back to ETH");
+
     it("should exit proportionally having multiple assets");
 
     it("should take the size of the shares into account during voting and allow grace period", async () => {

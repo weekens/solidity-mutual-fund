@@ -18,4 +18,8 @@ interface IAsset {
 
     // Deposits a given amount of ETH from an owning fund to this asset.
     function depositEth() external payable;
+
+    // Withdraws a given amount of ETH to a given address.
+    // Amount is passed as msg.value.
+    function withdrawEth(uint amount, address payable to) external;
 }
