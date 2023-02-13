@@ -100,8 +100,26 @@ export function Proposal(props: ProposalProps): ReactElement {
   }, [signerAddress, props.contract, props.model.id]);
 
   useEffect(() => {
-    setCanVote(!!signerAddress && !props.model.votes.some(v => v.memberAddress === signerAddress));
-  }, [signerAddress, props.model.votes]);
+    const currentTimeMillis = new Date().getTime();
+
+    setCanVote(
+      !!signerAddress &&
+      !!configuration &&
+      !props.model.votes.some(v => v.memberAddress === signerAddress) &&
+      props
+        .model
+        .createdAt
+        .add(configuration.votingPeriod)
+        .mul(1000)
+        .gt(currentTimeMillis) &&
+      props
+        .model
+        .createdAt
+        .add(configuration.proposalExpiryPeriod)
+        .mul(1000)
+        .gt(currentTimeMillis)
+    );
+  }, [signerAddress, props.model.votes, props.model.createdAt, configuration]);
 
   async function handleExecuteProposalClick() {
     if (!canExecute) {
