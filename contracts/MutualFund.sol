@@ -12,6 +12,8 @@ import "abdk-libraries-solidity/ABDKMath64x64.sol";
 // Mutual fund contract.
 contract MutualFund {
 
+    string private constant version = "0.0.1";
+
     using ABDKMath64x64 for int128;
 
     struct Configuration {
@@ -80,6 +82,10 @@ contract MutualFund {
     constructor(Configuration memory config) {
         configuration = config;
         members.push(Member({ name: config.founderName, addr: msg.sender, balance: 0 }));
+    }
+
+    function getVersion() public pure returns (string memory) {
+        return version;
     }
 
     function getConfiguration() public view returns (Configuration memory) {

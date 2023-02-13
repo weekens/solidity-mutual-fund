@@ -4,6 +4,9 @@ pragma solidity >=0.6.6;
 // Asset contract held by the mutual fund.
 interface IAsset {
 
+    // @return Asset contract version.
+    function getVersion() external view returns (string memory);
+
     // @return Asset name.
     function getName() external view returns (string memory);
 

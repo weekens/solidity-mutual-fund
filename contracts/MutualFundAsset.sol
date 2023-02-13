@@ -9,6 +9,8 @@ import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 // The actual contract for the mutual fund asset.
 contract MutualFundAsset is IAsset {
 
+    string private constant version = "0.0.1";
+
     address tokenAddress;
     address fundAddress;
     string name;
@@ -29,6 +31,10 @@ contract MutualFundAsset is IAsset {
         _;
     }
 
+    function getVersion() external override(IAsset) pure returns (string memory) {
+        return version;
+    }
+
     function getName() external override(IAsset) view returns (string memory) {
         return name;
     }
@@ -45,7 +51,7 @@ contract MutualFundAsset is IAsset {
         return IERC20(tokenAddress).approve(spender, amount);
     }
 
-    function depositEth() fundOnly external payable {
+    function depositEth() fundOnly external override(IAsset) payable {
         address[] memory path = new address[](2);
         path[0] = uniswapRouter.WETH();
         path[1] = tokenAddress;
@@ -57,7 +63,7 @@ contract MutualFundAsset is IAsset {
         );
     }
 
-    function withdrawEth(uint amount, address payable to) fundOnly external {
+    function withdrawEth(uint amount, address payable to) fundOnly external override(IAsset) {
         // Approve the Uniswap Router to spend the funds from this contract's address.
         IERC20(tokenAddress).approve(address(uniswapRouter2), amount);
 
