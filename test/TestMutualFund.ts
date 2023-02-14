@@ -13,6 +13,25 @@ const ERC20 = require("@openzeppelin/contracts/build/contracts/ERC20.json");
 
 describe("MutualFund", function () {
 
+    it("should not be able to deposit funds by plain transfer", async () => {
+        const MutualFund = await ethers.getContractFactory("MutualFund");
+        const fund = await MutualFund.deploy(defaultFundConfig());
+        const [founder, nonMember] = await ethers.getSigners();
+
+        await expect(
+          founder.sendTransaction({
+            to: fund.address,
+            value: 100
+          })
+        ).to.be.revertedWith("Asset not found");
+        await expect(
+          nonMember.sendTransaction({
+              to: fund.address,
+              value: 100
+          })
+        ).to.be.revertedWith("Asset not found");
+    });
+
     it("should be able to deposit funds with proposal", async () => {
         const MutualFund = await ethers.getContractFactory("MutualFund");
         const fund = await MutualFund.deploy(defaultFundConfig());
