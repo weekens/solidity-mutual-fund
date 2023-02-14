@@ -84,6 +84,16 @@ contract MutualFund {
         members.push(Member({ name: config.founderName, addr: msg.sender, balance: 0 }));
     }
 
+    modifier membersOnly() {
+        require(hasMemberWithAddress(msg.sender), "Sender should be a member!");
+        _;
+    }
+
+    receive() external payable {
+        // Only asset contracts can deposit funds to this contract by plain transfer.
+        findAssetByAddress(msg.sender);
+    }
+
     function getVersion() public pure returns (string memory) {
         return version;
     }
@@ -107,11 +117,6 @@ contract MutualFund {
 
     function getAssets() public view returns (IAsset[] memory) {
         return assets;
-    }
-
-    modifier membersOnly() {
-        require(hasMemberWithAddress(msg.sender), "Sender should be a member!");
-        _;
     }
 
     function submitProposal(ProposalRequest memory proposalRequest) membersOnly public returns (uint) {
@@ -196,7 +201,8 @@ contract MutualFund {
             asset.depositEth{ value: request.amount }();
         }
         else if (addr2 == address(this)) {
-            revert("Not implemented yet.");
+            IAsset asset = findAssetByAddress(addr1);
+            asset.withdrawEth(request.amount, payable(address(this)));
         }
         else {
             revert("Not implemented yet.");

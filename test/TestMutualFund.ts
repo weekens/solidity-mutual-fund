@@ -305,9 +305,32 @@ describe("MutualFund", function () {
         const signerBalanceAfterPartialExit = await ethers.provider.getBalance(signer.address);
 
         expect(signerBalanceAfterPartialExit.gt(signerBalanceAfterDeposit.sub(partialExitGasUsed))).to.be.true;
-    });
 
-    it("should be able to swap back to ETH");
+        // Swap back to ETH.
+        const swapBackProposalId = await submitProposal(
+          fund,
+          signer.address,
+          {
+              proposalType: ProposalType.Swap,
+              amount: assetBalanceAfterPartialExit,
+              addresses: [asset.address, fund.address],
+              name: ""
+          }
+        );
+        await executeProposal(
+          fund,
+          signer.address,
+          swapBackProposalId
+        );
+
+        const assetBalanceAfterSwapBack = await asset.getTotalBalance();
+
+        expect(assetBalanceAfterSwapBack.toNumber()).to.be.equal(0);
+
+        const fundBalanceAfterSwapBack = await ethers.provider.getBalance(fund.address);
+
+        expect(fundBalanceAfterSwapBack.gt(fundBalanceAfterPartialExit)).to.be.true;
+    });
 
     it("should exit proportionally having multiple assets");
 

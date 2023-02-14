@@ -31,6 +31,13 @@ contract MutualFundAsset is IAsset {
         _;
     }
 
+    receive() external payable {
+        require(
+            msg.sender == address(uniswapRouter) || msg.sender == address(uniswapRouter2),
+            "Sender is not allowed to deposit funds"
+        );
+    }
+
     function getVersion() external override(IAsset) pure returns (string memory) {
         return version;
     }
@@ -67,16 +74,33 @@ contract MutualFundAsset is IAsset {
         // Approve the Uniswap Router to spend the funds from this contract's address.
         IERC20(tokenAddress).approve(address(uniswapRouter2), amount);
 
-        // Perform a swap from token to ETH to the given address.
+        // Build swap path.
         address[] memory path = new address[](2);
         path[0] = tokenAddress;
         path[1] = uniswapRouter.WETH();
-        uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
-            amount,
-            0,
-            path,
-            to,
-            block.timestamp + 60 * 60
-        );
+
+        if (to == fundAddress) {
+            // Withdrawing to owning fund => we need to perform 2 jumps:
+            // 1. Swap to this asset address.
+            // 2. Transfer from this asset address to the fund through the special payable function.
+            uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                amount,
+                0,
+                path,
+                address(this),
+                block.timestamp + 60 * 60
+            );
+            to.transfer(address(this).balance);
+        }
+        else {
+            // Perform a swap from token to ETH to the given address.
+            uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                amount,
+                0,
+                path,
+                to,
+                block.timestamp + 60 * 60
+            );
+        }
     }
 }
