@@ -6,10 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
-// General-purpose mutual fund asset contract.
-// Performs token conversions through Uniswap contracts.
-contract MutualFundAsset is IAsset {
-
+// This asset provides liquidity to a Uniswap-compatible contract and
+// earns on fees charged by the Uniswap protocol for token pair swaps.
+contract UniswapLiquidityPairAsset is IAsset {
     string private constant version = "0.0.1";
 
     address tokenAddress;
@@ -68,36 +67,6 @@ contract MutualFundAsset is IAsset {
     }
 
     function withdrawEth(uint amount, address payable to) fundOnly external override(IAsset) {
-        // Approve the Uniswap Router to spend the funds from this contract's address.
-        IERC20(tokenAddress).approve(address(uniswapRouter2), amount);
-
-        // Build swap path.
-        address[] memory path = new address[](2);
-        path[0] = tokenAddress;
-        path[1] = uniswapRouter.WETH();
-
-        if (to == fundAddress) {
-            // Withdrawing to owning fund => we need to perform 2 jumps:
-            // 1. Swap to this asset address.
-            // 2. Transfer from this asset address to the fund through the special payable function.
-            uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                amount,
-                0,
-                path,
-                address(this),
-                block.timestamp + 60 * 60
-            );
-            to.transfer(address(this).balance);
-        }
-        else {
-            // Perform a swap from token to ETH to the given address.
-            uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                amount,
-                0,
-                path,
-                to,
-                block.timestamp + 60 * 60
-            );
-        }
+        revert("Not implemented");
     }
 }
