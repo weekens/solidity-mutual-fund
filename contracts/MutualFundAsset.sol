@@ -10,7 +10,7 @@ import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 // Performs token conversions through Uniswap contracts.
 contract MutualFundAsset is IAsset {
 
-    string private constant version = "0.0.1";
+    string private constant version = "0.0.2";
 
     address tokenAddress;
     address fundAddress;
