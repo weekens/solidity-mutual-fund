@@ -3,6 +3,8 @@ pragma solidity >=0.6.6;
 
 import "./IAsset.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
@@ -11,17 +13,29 @@ import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 contract UniswapLiquidityPairAsset is IAsset {
     string private constant version = "0.0.1";
 
-    address tokenAddress;
+    address token1Address;
+    address token2Address;
     address fundAddress;
     string name;
 
+    IUniswapV2Factory private constant uniswapFactory =
+        IUniswapV2Factory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
     IUniswapV2Router01 private constant uniswapRouter =
         IUniswapV2Router01(0xf164fC0Ec4E93095b804a4795bBe1e041497b92a);
     IUniswapV2Router02 private constant uniswapRouter2 =
         IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
-    constructor(address initTokenAddress, address initFundAddress, string memory initName) {
-        tokenAddress = initTokenAddress;
+    constructor(
+        address initToken1Address,
+        address initToken2Address,
+        address initFundAddress,
+        string memory initName
+    ) {
+        require(initToken1Address != initToken2Address, "Token addresses should not be identical");
+        (address sortedToken1Address, address sortedToken2Address) =
+            sortTokens(initToken1Address, initToken2Address);
+        token1Address = sortedToken1Address;
+        token2Address = sortedToken2Address;
         fundAddress = initFundAddress;
         name = initName;
     }
@@ -47,26 +61,24 @@ contract UniswapLiquidityPairAsset is IAsset {
     }
 
     function getTokenAddress() external override(IAsset) view returns (address) {
-        return tokenAddress;
+        return uniswapFactory.getPair(token1Address, token2Address);
     }
 
     function getTotalBalance() external override(IAsset) view returns (uint) {
-        return IERC20(tokenAddress).balanceOf(address(this));
+        IUniswapV2Pair pair = IUniswapV2Pair(uniswapFactory.getPair(token1Address, token2Address));
+
+        return pair.price0CumulativeLast() + pair.price1CumulativeLast();
     }
 
     function depositEth() fundOnly external override(IAsset) payable {
-        address[] memory path = new address[](2);
-        path[0] = uniswapRouter.WETH();
-        path[1] = tokenAddress;
-        uniswapRouter.swapExactETHForTokens{ value: msg.value }(
-            0,
-            path,
-            address(this),
-            block.timestamp + 60 * 60
-        );
+        revert("Not implemented");
     }
 
     function withdrawEth(uint amount, address payable to) fundOnly external override(IAsset) {
         revert("Not implemented");
+    }
+
+    function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
+        (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
     }
 }
