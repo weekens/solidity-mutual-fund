@@ -351,4 +351,51 @@ describe("Voting Tests", function () {
     const members = await fund.getMembers();
     expect(members).to.have.lengthOf(3);
   });
+
+  it("should properly handle votes from kicked members", async () => {
+    const MutualFund = await ethers.getContractFactory("MutualFund");
+    const fund = await MutualFund.deploy(defaultFundConfig());
+    const [founder, member1, member2] = await ethers.getSigners();
+
+    await depositFunds(fund, founder.address, 10000);
+
+    // Add second member.
+    const memberProposalId = await submitProposal(fund, founder.address, {
+      proposalType: ProposalType.AddMember,
+      name: "member1",
+      amount: 0,
+      addresses: [member1.address]
+    });
+    await executeProposal(fund, founder.address, memberProposalId);
+
+    // Propose adding third member.
+    const member2ProposalId = await submitProposal(
+      fund,
+      founder.address,
+      {
+        proposalType: ProposalType.AddMember,
+        name: "member2",
+        amount: 0,
+        addresses: [member2.address]
+      }
+    );
+
+    await voteForProposal(fund, member1.address, member2ProposalId);
+
+    // Kick second member.
+    const kickMemberProposalId = await submitProposal(fund, founder.address, {
+      proposalType: ProposalType.KickMember,
+      name: "",
+      amount: 0,
+      addresses: [member1.address]
+    });
+    await voteForProposal(fund, member1.address, kickMemberProposalId);
+    await executeProposal(fund, founder.address, kickMemberProposalId);
+
+    // Now we should be able to execute the second proposal.
+    await executeProposal(fund, founder.address, member2ProposalId);
+
+    const members = await fund.getMembers();
+    expect(members).to.have.lengthOf(2);
+  });
 });
