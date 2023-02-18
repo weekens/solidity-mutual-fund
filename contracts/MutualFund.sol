@@ -344,6 +344,16 @@ contract MutualFund {
         revert("Member not found");
     }
 
+    function tryFindMemberWithAddress(address addr) private view returns (bool found, uint index) {
+        for (uint i = 0; i < members.length; i++) {
+            if (members[i].addr == addr) {
+                return (true, i);
+            }
+        }
+
+        return (false, 0);
+    }
+
     function removeMember(uint index) private {
         for(uint i = index; i < members.length - 1; i++) {
             members[i] = members[i + 1];
@@ -395,18 +405,28 @@ contract MutualFund {
         uint noSupportBalance = 0;
         uint votesLength = proposal.votes.length;
         uint membersLength = members.length;
+        uint votesDecrement = 0;
 
         for (uint i = 0; i < votesLength; i++) {
             Vote storage v = proposal.votes[i];
-            (Member storage member,) = findMemberByAddress(v.memberAddress);
+            (bool memberFound, uint memberIndex) = tryFindMemberWithAddress(v.memberAddress);
 
-            if (v.support) {
-                supportBalance += member.balance;
+            if (memberFound) {
+                Member storage member = members[memberIndex];
+
+                if (v.support) {
+                    supportBalance += member.balance;
+                }
+                else {
+                    noSupportBalance += member.balance;
+                }
             }
             else {
-                noSupportBalance += member.balance;
+                votesDecrement += 1; // We don't count a vote from removed member.
             }
         }
+
+        votesLength -= votesDecrement;
 
         if (membersLength == 1) {
             // Allow zero votes or vote ties when we have only one member.
