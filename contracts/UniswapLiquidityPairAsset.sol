@@ -17,6 +17,7 @@ contract UniswapLiquidityPairAsset is IAsset {
     address token2Address;
     address fundAddress;
     string name;
+    uint private liquidityAmount = 0;
 
     IUniswapV2Factory private constant uniswapFactory =
         IUniswapV2Factory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
@@ -71,7 +72,30 @@ contract UniswapLiquidityPairAsset is IAsset {
     }
 
     function depositEth() fundOnly external override(IAsset) payable {
-        revert("Not implemented");
+        if (token1Address == address(0)) { // Create pair with ETH.
+            address[] memory path = new address[](2);
+            path[0] = uniswapRouter.WETH();
+            path[1] = token2Address;
+            uint[] memory amounts = uniswapRouter.swapExactETHForTokens{ value: msg.value / 2 }(
+                0,
+                path,
+                address(this),
+                block.timestamp + 60 * 60
+            );
+            IERC20(token2Address).approve(address(uniswapRouter), amounts[1]);
+            (,, uint liquidity) = uniswapRouter.addLiquidityETH{ value: msg.value / 2 }(
+                token2Address,
+                amounts[1],
+                0,
+                0,
+                address(this),
+                block.timestamp + 60 * 60
+            );
+            liquidityAmount += liquidity;
+        }
+        else { // Create pair for 2 non-ETH tokens.
+            revert("Not implemented");
+        }
     }
 
     function withdrawEth(uint amount, address payable to) fundOnly external override(IAsset) {
