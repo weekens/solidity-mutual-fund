@@ -47,7 +47,7 @@ describe("MutualFund", function () {
     await expect(
       fund.executeProposal(
         proposalId,
-        {from: signer.address, value: 200}
+        { from: signer.address, value: 200 }
       )
     ).to.revertedWith("The sent funds amount differs from proposed");
 
@@ -59,7 +59,7 @@ describe("MutualFund", function () {
     await expect(
       fund.executeProposal(
         proposalId,
-        {from: signer.address, value: 20}
+        { from: signer.address, value: 20 }
       )
     ).to.emit(fund, "ProposalExecuted").withArgs(proposalId);
 
@@ -272,7 +272,7 @@ describe("MutualFund", function () {
           addresses: [fund.address, asset.address],
           name: ""
         },
-        {from: signer.address}
+        { from: signer.address }
       )
     ).to.be.revertedWith("Invalid proposal request: amount exceeds balance");
 
@@ -386,7 +386,7 @@ describe("MutualFund", function () {
     await expect(
       fund.executeProposal(
         memberProposalId,
-        {value: 0}
+        { value: 0 }
       ))
       .to.be.revertedWith("Proposal has expired");
   });
