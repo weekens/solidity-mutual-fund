@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.6.6;
+pragma solidity >=0.8.0;
 
 import "./IAsset.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -17,7 +17,6 @@ contract UniswapLiquidityPairAsset is IAsset {
     address token2Address;
     address fundAddress;
     string name;
-    uint private liquidityAmount = 0;
 
     IUniswapV2Factory private constant uniswapFactory =
         IUniswapV2Factory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
@@ -62,13 +61,37 @@ contract UniswapLiquidityPairAsset is IAsset {
     }
 
     function getTokenAddress() external override(IAsset) view returns (address) {
-        return uniswapFactory.getPair(token1Address, token2Address);
+        if (token1Address == address(0)) { // Pair with ETH.
+            return uniswapFactory.getPair(uniswapRouter.WETH(), token2Address);
+        }
+        else {
+            return uniswapFactory.getPair(token1Address, token2Address);
+        }
     }
 
     function getTotalBalance() external override(IAsset) view returns (uint) {
-        IUniswapV2Pair pair = IUniswapV2Pair(uniswapFactory.getPair(token1Address, token2Address));
+        uint liquidityAmount = getLiquidityAmount();
 
-        return pair.price0CumulativeLast() + pair.price1CumulativeLast();
+        if (liquidityAmount == 0) return 0;
+
+        if (token1Address == address(0)) { // Pair with ETH.
+            IUniswapV2Pair pair = IUniswapV2Pair(uniswapFactory.getPair(uniswapRouter.WETH(), token2Address));
+            (uint112 token2Reserve, uint112 wethReserve,) = pair.getReserves();
+            uint wethAmount = liquidityAmount * uint256(wethReserve) / pair.totalSupply();
+            uint token2Amount = liquidityAmount * uint256(token2Reserve) / pair.totalSupply();
+            uint token2EthValue = uniswapRouter.quote(token2Amount, token2Reserve, wethReserve);
+
+            return uint256(wethAmount) + uint256(token2EthValue);
+        }
+        else {
+            revert("Not implemented");
+        }
+    }
+
+    function getLiquidityAmount() public view returns (uint) {
+        // Each Uniswap pair contract maintains its own liquidity token that is used to track liquidity
+        // of the pool contributors.
+        return IERC20(this.getTokenAddress()).balanceOf(address(this));
     }
 
     function depositEth() fundOnly external override(IAsset) payable {
@@ -83,7 +106,7 @@ contract UniswapLiquidityPairAsset is IAsset {
                 block.timestamp + 60 * 60
             );
             IERC20(token2Address).approve(address(uniswapRouter), amounts[1]);
-            (,, uint liquidity) = uniswapRouter.addLiquidityETH{ value: msg.value / 2 }(
+            uniswapRouter.addLiquidityETH{ value: msg.value / 2 }(
                 token2Address,
                 amounts[1],
                 0,
@@ -91,7 +114,6 @@ contract UniswapLiquidityPairAsset is IAsset {
                 address(this),
                 block.timestamp + 60 * 60
             );
-            liquidityAmount += liquidity;
         }
         else { // Create pair for 2 non-ETH tokens.
             revert("Not implemented");
