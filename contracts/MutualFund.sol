@@ -367,9 +367,7 @@ contract MutualFund {
     }
 
     function removeMember(uint index) private {
-        for(uint i = index; i < members.length - 1; i++) {
-            members[i] = members[i + 1];
-        }
+        members[index] = members[members.length - 1];
         members.pop();
     }
 
