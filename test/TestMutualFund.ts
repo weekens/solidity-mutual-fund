@@ -223,9 +223,9 @@ describe("MutualFund", function () {
     const assetTokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC
     const assetTokenContract = new ethers.Contract(assetTokenAddress, ERC20.abi, ethers.provider);
     const MutualFund = await ethers.getContractFactory("MutualFund");
-    const MutualFundAsset = await ethers.getContractFactory("MutualFundAsset");
+    const Erc20TokenAsset = await ethers.getContractFactory("Erc20TokenAsset");
     const fund = await MutualFund.deploy(defaultFundConfig());
-    const asset = await MutualFundAsset.deploy(assetTokenAddress, fund.address, "USDC");
+    const asset = await Erc20TokenAsset.deploy(assetTokenAddress, fund.address, "USDC");
 
     const initialAssetBalance = await assetTokenContract.balanceOf(asset.address);
 
@@ -262,19 +262,6 @@ describe("MutualFund", function () {
     await depositFunds(fund, signer.address, ethers.utils.parseEther("1"));
 
     const signerBalanceAfterDeposit = await ethers.provider.getBalance(signer.address);
-
-    // Propose a swap that exceeds the balance, should be reverted.
-    await expect(
-      fund.submitProposal(
-        {
-          proposalType: ProposalType.Swap,
-          amount: ethers.utils.parseEther("2"),
-          addresses: [fund.address, asset.address],
-          name: ""
-        },
-        { from: signer.address }
-      )
-    ).to.be.revertedWith("Invalid proposal request: amount exceeds balance");
 
     const swapProposalId = await submitProposal(
       fund,

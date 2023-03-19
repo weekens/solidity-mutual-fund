@@ -6,9 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
-// General-purpose mutual fund asset contract.
-// Performs token conversions through Uniswap contracts.
-contract MutualFundAsset is IAsset {
+// Asset holding a ERC20 token.
+contract Erc20TokenAsset is IAsset {
 
     string private constant version = "0.0.2";
 
