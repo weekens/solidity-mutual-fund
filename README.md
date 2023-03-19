@@ -113,17 +113,8 @@ If the fund would only hold the deposited ETH without doing anything with it, it
 Instead, the fund's smart contract provides the possibility to hold various *assets* in the treasury and
  transfer the funds between these *assets*.
 
-An *asset* is a smart contract that implements the [`IAsset.sol`](./contracts/IAsset.sol) interface and
- represents a token in the Ethereum blockchain.
-
-The default implementation of an *asset* resides in the
- [`MutualFundAsset.sol`](./contracts/MutualFundAsset.sol) file and can be deployed to the Ethereum blockchain
- with the following initialization parameters:
-
-- `initTokenAddress`: address of a token in the Ethereum blockchain
-- `initFundAddress`: address of a fund that will own this asset (certain operations on an asset can only
-  be performed by an owning fund and nobody else)
-- `initName`: name of this asset (normally equals to the token name or symbol)
+An *asset* is a smart contract that implements the [`IAsset`](./contracts/IAsset.sol) interface and
+ represents a token or other type of value asset in the Ethereum blockchain.
 
 Once the *asset* is deployed, it can be added to the fund by means of an `AddAsset` proposal, where the
  `addresses` parameter contains the address of a deployed *asset* contract as the first and the only
@@ -210,6 +201,40 @@ During the grace period a *proposal* cannot be executed, and *members* have the 
  or partially.
 
 The *voting* is done with the `vote` contract function.
+
+### Assets
+
+To connect an *asset* to the fund with the `AddAsset` proposal, one should deploy the asset contract to the
+ blockchain first.
+As mentioned in [`AddAsset`](#addasset) section, the *asset* contract should implement the
+ [`IAsset`](./contracts/IAsset.sol) interface.
+
+This repository provides 2 implementations of the asset contract, covered below.
+
+#### [`MutualFundAsset`](./contracts/MutualFundAsset.sol)
+
+This is an implementation of a single ERC20 token *asset*.
+
+The contract is deployed to the Ethereum blockchain with the following initialization parameters:
+
+- `initTokenAddress`: address of a token in the Ethereum blockchain
+- `initFundAddress`: address of a fund that will own this asset (certain operations on an asset can only
+  be performed by an owning fund and nobody else)
+- `initName`: name of this asset (normally equals to the token name or symbol)
+
+#### [`UniswapLiquidityPairAsset`](./contracts/UniswapLiquidityPairAsset.sol)
+
+This *asset* represents a liquidity pair in Uniswap-compatible DEX.
+The *asset* accepts ETH and automatically converts it to the tokens of the pair with Uniswap swap functions,
+ and provides liquidity to the DEX, earning commissions from the exchange.
+
+The contract is deployed to the Ethereum blockchain with the following initialization parameters:
+
+- `initToken1Address`: address of a fist token used in the liquidity pair, or zero address, if it is ETH
+- `initToken2Address`: address of a second token used in the liquidity pair, or zero address, if it is ETH
+- `initFundAddress`: address of a fund that will own this asset (certain operations on an asset can only
+  be performed by an owning fund and nobody else)
+- `initName`: name of this asset (normally equals to the token name or symbol)
 
 ## Development
 
