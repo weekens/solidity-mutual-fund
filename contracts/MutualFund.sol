@@ -292,7 +292,6 @@ contract MutualFund {
         }
         else if (proposalType == ProposalType.Swap) {
             require(request.amount > 0, "Invalid proposal request: amount should be positive");
-            require(request.amount <= address(this).balance, "Invalid proposal request: amount exceeds balance");
             require(request.addresses.length == 2, "Invalid proposal request: number of addresses should be 2");
             require(
                 request.addresses[0] != address(0) && request.addresses[1] != address(0),
