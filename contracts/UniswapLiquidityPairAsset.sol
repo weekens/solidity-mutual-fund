@@ -126,6 +126,7 @@ contract UniswapLiquidityPairAsset is IAsset {
         if (token1Address == address(0)) { // Pair with ETH.
             // Remove liquidity.
             // As a result, we get ETH and token2 tokens to this fund's address.
+            IERC20(this.getTokenAddress()).approve(address(uniswapRouter), liquidityToBurn);
             (uint token2Amount,) = uniswapRouter.removeLiquidityETH(
                 token2Address,
                 liquidityToBurn,
@@ -136,7 +137,7 @@ contract UniswapLiquidityPairAsset is IAsset {
             );
             // Swap from token 2 to ETH.
             // Approve the Uniswap Router to spend the funds from this contract's address.
-            IERC20(address(this)).approve(address(uniswapRouter2), token2Amount);
+            IERC20(token2Address).approve(address(uniswapRouter2), token2Amount);
             // Build swap path.
             address[] memory path = new address[](2);
             path[0] = token2Address;
