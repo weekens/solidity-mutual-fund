@@ -287,7 +287,7 @@ contract MutualFund {
 
         // Remove the member from the fund if we've got a 100% exit.
         if (percent == 100) {
-            removeMember(memberIndex);
+            removeMemberByIndex(memberIndex);
         }
 
         emit Exit(memberAddress, percent, toReturn);
@@ -366,7 +366,7 @@ contract MutualFund {
         return (false, 0);
     }
 
-    function removeMember(uint index) private {
+    function removeMemberByIndex(uint index) private {
         members[index] = members[members.length - 1];
         members.pop();
     }
