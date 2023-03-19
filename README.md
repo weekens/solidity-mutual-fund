@@ -20,8 +20,10 @@ The [`contracts`](./contracts) folder contains the code of the smart contract:
 
 - [`MutualFund.sol`](./contracts/MutualFund.sol) contains the main contract code
 - [`IAsset.sol`](./contracts/IAsset.sol) contains the interface for the fund asset smart contracts
-- [`MutualFundAsset.sol`](./contracts/MutualFundAsset.sol) contains the default implementation of the fund
+- [`Erc20TokenAsset.sol`](./contracts/Erc20TokenAsset.sol) contains the default implementation of the fund
  asset smart contract
+- [`UniswapLiquidityPairAsset.sol`](./contracts/UniswapLiquidityPairAsset.sol) contains the Uniswap liquidity
+ pair asset smart contract
 
 The [`frontend`](./frontend) folder contains the implementation code for the fund's Web3 user interface.
 
@@ -211,7 +213,7 @@ As mentioned in [`AddAsset`](#addasset) section, the *asset* contract should imp
 
 This repository provides 2 implementations of the asset contract, covered below.
 
-#### [`MutualFundAsset`](./contracts/MutualFundAsset.sol)
+#### [`Erc20TokenAsset`](./contracts/Erc20TokenAsset.sol)
 
 This is an implementation of a single ERC20 token *asset*.
 
