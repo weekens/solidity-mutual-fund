@@ -378,6 +378,37 @@ describe("MutualFund", function () {
       .to.be.revertedWith("Proposal has expired");
   });
 
+  it("should be able to drop expired proposals", async () => {
+    const MutualFund = await ethers.getContractFactory("MutualFund");
+    const fund = await MutualFund.deploy(defaultFundConfig());
+    const [founder, member1, member2] = await ethers.getSigners();
+
+    // Submit proposal.
+    const memberProposalId = await submitProposal(fund, founder.address, {
+      proposalType: ProposalType.AddMember,
+      name: "member1",
+      amount: 0,
+      addresses: [member1.address]
+    });
+
+    // Wait for proposal expiry.
+    await time.increase(10 * 24 * 60 * 60);
+
+    const memberProposalId2 = await submitProposal(fund, founder.address, {
+      proposalType: ProposalType.AddMember,
+      name: "member2",
+      amount: 0,
+      addresses: [member2.address]
+    });
+
+    await fund.dropExpiredProposals(); // member1 proposal is expired and should be removed.
+
+    const proposals = await fund.getProposals();
+
+    expect(proposals).to.have.lengthOf(1);
+    expect(proposals[0].id.eq(memberProposalId2)).to.be.true;
+  });
+
   it("should be able to add liquidity pair asset and add liquidity", async () => {
     const assetTokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC
     const zeroAddress = "0x0000000000000000000000000000000000000000"; // ETH

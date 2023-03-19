@@ -187,9 +187,22 @@ contract MutualFund {
             revert("Unknown proposal type");
         }
 
-        removeProposal(proposalId);
+        removeProposalById(proposalId);
 
         emit ProposalExecuted(proposalId);
+    }
+
+    function dropExpiredProposals() membersOnly public {
+        uint i = 0;
+
+        while (i < proposals.length) {
+            if (isProposalExpired(proposals[i])) {
+                removeProposalByIndex(i);
+            }
+            else {
+                i++;
+            }
+        }
     }
 
     function executeSwapProposal(ProposalRequest storage request) private {
@@ -368,12 +381,14 @@ contract MutualFund {
         revert("Proposal not found");
     }
 
-    function removeProposal(uint proposalId) private {
+    function removeProposalById(uint proposalId) private {
         (, uint index) = findProposalById(proposalId);
 
-        for(uint i = index; i < proposals.length - 1; i++) {
-            proposals[i] = proposals[i + 1];
-        }
+        removeProposalByIndex(index);
+    }
+
+    function removeProposalByIndex(uint index) private {
+        proposals[index] = proposals[proposals.length - 1];
         proposals.pop();
     }
 
@@ -397,7 +412,7 @@ contract MutualFund {
         if (proposal.author != memberAddress)
             return (false, "Executor is not a proposal author");
 
-        if (proposal.createdAt + configuration.proposalExpiryPeriod <= block.timestamp)
+        if (isProposalExpired(proposal))
             return (false, "Proposal has expired");
 
         uint supportBalance = 0;
@@ -450,6 +465,10 @@ contract MutualFund {
         }
 
         return (true, "");
+    }
+
+    function isProposalExpired(Proposal storage proposal) private view returns (bool) {
+        return proposal.createdAt + configuration.proposalExpiryPeriod <= block.timestamp;
     }
 
     function canExecuteProposal(uint proposalId) public view returns (bool, string memory) {
