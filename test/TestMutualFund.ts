@@ -384,7 +384,7 @@ describe("MutualFund", function () {
     const [founder, member1, member2] = await ethers.getSigners();
 
     // Submit proposal.
-    const memberProposalId = await submitProposal(fund, founder.address, {
+    await submitProposal(fund, founder.address, {
       proposalType: ProposalType.AddMember,
       name: "member1",
       amount: 0,
@@ -409,7 +409,7 @@ describe("MutualFund", function () {
     expect(proposals[0].id.eq(memberProposalId2)).to.be.true;
   });
 
-  it("should be able to add liquidity pair asset and add liquidity", async () => {
+  it("should be able to add liquidity pair asset for ETH-ERC20 token pair and add liquidity", async () => {
     const assetTokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC
     const zeroAddress = "0x0000000000000000000000000000000000000000"; // ETH
     const assetTokenContract = new ethers.Contract(assetTokenAddress, ERC20.abi, ethers.provider);
@@ -421,6 +421,142 @@ describe("MutualFund", function () {
       assetTokenAddress,
       fund.address,
       "ETH-USDC"
+    );
+
+    const initialAssetBalance = await assetTokenContract.balanceOf(asset.address);
+
+    expect(initialAssetBalance.toNumber()).to.be.equal(0);
+
+    const assets = await fund.getAssets();
+
+    expect(assets).to.have.lengthOf(0);
+
+    const [signer] = await ethers.getSigners();
+
+    const assetProposalId = await submitProposal(
+      fund,
+      signer.address,
+      {
+        proposalType: ProposalType.AddAsset,
+        amount: 0,
+        addresses: [asset.address],
+        name: ""
+      }
+    );
+
+    await executeProposal(
+      fund,
+      signer.address,
+      assetProposalId
+    );
+
+    const newAssets = await fund.getAssets();
+
+    expect(newAssets).to.have.lengthOf(1);
+    expect(newAssets[0]).to.be.equal(asset.address);
+
+    await depositFunds(fund, signer.address, ethers.utils.parseEther("1"));
+
+    const signerBalanceAfterDeposit = await ethers.provider.getBalance(signer.address);
+    const assetBalanceBeforeSwap = await asset.getTotalBalance();
+
+    expect(assetBalanceBeforeSwap.eq(0)).to.be.true;
+
+    const liquidityAmountBeforeSwap = await asset.getLiquidityAmount();
+
+    expect(liquidityAmountBeforeSwap.eq(0)).to.be.true;
+
+    const swapAmount = ethers.utils.parseEther("1");
+    const swapProposalId = await submitProposal(
+      fund,
+      signer.address,
+      {
+        proposalType: ProposalType.Swap,
+        amount: swapAmount,
+        addresses: [fund.address, asset.address],
+        name: ""
+      }
+    );
+    await executeProposal(
+      fund,
+      signer.address,
+      swapProposalId
+    );
+
+    const liquidityAmountAfterSwap = await asset.getLiquidityAmount();
+
+    expect(liquidityAmountAfterSwap.gt(0)).to.be.true;
+
+    const fundBalanceAfterSwap = await ethers.provider.getBalance(fund.address);
+
+    expect(fundBalanceAfterSwap.eq(0)).to.be.true;
+
+    const assetBalanceAfterSwap = await asset.getTotalBalance();
+
+    // We paid 0.003 for conversion from ETH to USDC.
+    expect(assetBalanceAfterSwap.gt(swapAmount.mul(997).div(1000))).to.be.true;
+    expect(assetBalanceAfterSwap.lt(swapAmount)).to.be.true;
+
+    // Withdraw 50% of the funds.
+    const partialExitTx = await fund.exit(50);
+    const partialExitResult = await partialExitTx.wait();
+    const partialExitGasUsed = partialExitResult.effectiveGasPrice.mul(partialExitResult.cumulativeGasUsed);
+    const partialExitEvent = partialExitResult.events?.find(evt => evt.event === "Exit")
+
+    expect(partialExitEvent).to.not.be.undefined;
+
+    const fundBalanceAfterPartialExit = await ethers.provider.getBalance(fund.address);
+
+    expect(fundBalanceAfterPartialExit.eq(0)).to.be.true;
+
+    const assetBalanceAfterPartialExit = await asset.getTotalBalance();
+
+    expect(assetBalanceAfterPartialExit.lte(assetBalanceAfterSwap.div(2))).to.be.true;
+    expect(assetBalanceAfterPartialExit.gte(assetBalanceAfterSwap.div(2).div(100).mul(99)))
+      .to.be.true;
+
+    const signerBalanceAfterPartialExit = await ethers.provider.getBalance(signer.address);
+
+    expect(signerBalanceAfterPartialExit.gt(signerBalanceAfterDeposit.sub(partialExitGasUsed))).to.be.true;
+
+    // Swap back to ETH.
+    const swapBackProposalId = await submitProposal(
+      fund,
+      signer.address,
+      {
+        proposalType: ProposalType.Swap,
+        amount: assetBalanceAfterPartialExit,
+        addresses: [asset.address, fund.address],
+        name: ""
+      }
+    );
+    await executeProposal(
+      fund,
+      signer.address,
+      swapBackProposalId
+    );
+
+    const assetBalanceAfterSwapBack = await asset.getTotalBalance();
+
+    expect(assetBalanceAfterSwapBack.toNumber()).to.be.equal(0);
+
+    const fundBalanceAfterSwapBack = await ethers.provider.getBalance(fund.address);
+
+    expect(fundBalanceAfterSwapBack.gt(fundBalanceAfterPartialExit)).to.be.true;
+  });
+
+  it("should be able to add liquidity pair asset for ERC20-ERC20 token pair and add liquidity", async () => {
+    const asset1TokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC
+    const asset2TokenAddress = "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"; // UNI
+    const assetTokenContract = new ethers.Contract(asset1TokenAddress, ERC20.abi, ethers.provider);
+    const MutualFund = await ethers.getContractFactory("MutualFund");
+    const MutualFundAsset = await ethers.getContractFactory("UniswapLiquidityPairAsset");
+    const fund = await MutualFund.deploy(defaultFundConfig());
+    const asset = await MutualFundAsset.deploy(
+      asset1TokenAddress,
+      asset2TokenAddress,
+      fund.address,
+      "USDC-UNI"
     );
 
     const initialAssetBalance = await assetTokenContract.balanceOf(asset.address);
