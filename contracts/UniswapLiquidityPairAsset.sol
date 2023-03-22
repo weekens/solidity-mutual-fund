@@ -74,17 +74,27 @@ contract UniswapLiquidityPairAsset is IAsset {
 
         if (liquidityAmount == 0) return 0;
 
+        IUniswapV2Pair wethToken2Pair = IUniswapV2Pair(uniswapFactory.getPair(uniswapRouter.WETH(), token2Address));
+        (uint112 wethToken2Reserve, uint112 wethToken2WethReserve,) = wethToken2Pair.getReserves();
+
         if (token1Address == address(0)) { // Pair with ETH.
-            IUniswapV2Pair pair = IUniswapV2Pair(uniswapFactory.getPair(uniswapRouter.WETH(), token2Address));
-            (uint112 token2Reserve, uint112 wethReserve,) = pair.getReserves();
-            uint wethAmount = liquidityAmount * uint256(wethReserve) / pair.totalSupply();
-            uint token2Amount = liquidityAmount * uint256(token2Reserve) / pair.totalSupply();
-            uint token2EthValue = uniswapRouter.quote(token2Amount, token2Reserve, wethReserve);
+            uint wethAmount = liquidityAmount * uint256(wethToken2WethReserve) / wethToken2Pair.totalSupply();
+            uint token2Amount = liquidityAmount * uint256(wethToken2Reserve) / wethToken2Pair.totalSupply();
+            uint token2EthValue = uniswapRouter.quote(token2Amount, wethToken2Reserve, wethToken2WethReserve);
 
             return uint256(wethAmount) + uint256(token2EthValue) + address(this).balance;
         }
         else {
-            revert("Not implemented");
+            IUniswapV2Pair token1Token2Pair = IUniswapV2Pair(uniswapFactory.getPair(token1Address, token2Address));
+            (uint112 token1Reserve, uint112 token2Reserve,) = token1Token2Pair.getReserves();
+            uint token1Amount = liquidityAmount * uint256(token1Reserve) / token1Token2Pair.totalSupply();
+            uint token2Amount = liquidityAmount * uint256(token2Reserve) / token1Token2Pair.totalSupply();
+            IUniswapV2Pair wethToken1Pair = IUniswapV2Pair(uniswapFactory.getPair(uniswapRouter.WETH(), token1Address));
+            (uint112 wethToken1Reserve, uint112 wethToken1WethReserve,) = wethToken1Pair.getReserves();
+            uint token1EthValue = uniswapRouter.quote(token1Amount, wethToken1Reserve, wethToken1WethReserve);
+            uint token2EthValue = uniswapRouter.quote(token2Amount, wethToken2Reserve, wethToken2WethReserve);
+
+            return uint256(token1EthValue) + uint256(token2EthValue) + address(this).balance;
         }
     }
 
