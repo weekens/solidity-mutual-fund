@@ -64,7 +64,7 @@ contract UniswapLiquidityPairAsset is IAsset {
         if (token1Address == address(0)) { // Pair with ETH.
             return uniswapFactory.getPair(uniswapRouter.WETH(), token2Address);
         }
-        else {
+        else { // ERC20-ERC20 token pair.
             return uniswapFactory.getPair(token1Address, token2Address);
         }
     }
@@ -75,7 +75,7 @@ contract UniswapLiquidityPairAsset is IAsset {
         if (liquidityAmount == 0) return 0;
 
         IUniswapV2Pair wethToken2Pair = IUniswapV2Pair(uniswapFactory.getPair(uniswapRouter.WETH(), token2Address));
-        (uint112 wethToken2Reserve, uint112 wethToken2WethReserve,) = wethToken2Pair.getReserves();
+        (uint112 wethToken2WethReserve, uint112 wethToken2Reserve) = getWethPairReservesWethFirst(wethToken2Pair);
 
         if (token1Address == address(0)) { // Pair with ETH.
             uint wethAmount = liquidityAmount * uint256(wethToken2WethReserve) / wethToken2Pair.totalSupply();
@@ -84,13 +84,13 @@ contract UniswapLiquidityPairAsset is IAsset {
 
             return uint256(wethAmount) + uint256(token2EthValue) + address(this).balance;
         }
-        else {
+        else { // ERC20-ERC20 token pair.
             IUniswapV2Pair token1Token2Pair = IUniswapV2Pair(uniswapFactory.getPair(token1Address, token2Address));
             (uint112 token1Reserve, uint112 token2Reserve,) = token1Token2Pair.getReserves();
             uint token1Amount = liquidityAmount * uint256(token1Reserve) / token1Token2Pair.totalSupply();
             uint token2Amount = liquidityAmount * uint256(token2Reserve) / token1Token2Pair.totalSupply();
             IUniswapV2Pair wethToken1Pair = IUniswapV2Pair(uniswapFactory.getPair(uniswapRouter.WETH(), token1Address));
-            (uint112 wethToken1Reserve, uint112 wethToken1WethReserve,) = wethToken1Pair.getReserves();
+            (uint112 wethToken1WethReserve, uint112 wethToken1Reserve) = getWethPairReservesWethFirst(wethToken1Pair);
             uint token1EthValue = uniswapRouter.quote(token1Amount, wethToken1Reserve, wethToken1WethReserve);
             uint token2EthValue = uniswapRouter.quote(token2Amount, wethToken2Reserve, wethToken2WethReserve);
 
@@ -176,6 +176,25 @@ contract UniswapLiquidityPairAsset is IAsset {
 
     function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+    }
+
+    function getWethPairReservesWethFirst(
+        IUniswapV2Pair pair
+    ) internal view returns (uint112 wethReserve, uint112 token2Reserve) {
+        (uint112 firstReserve, uint112 secondReserve,) = pair.getReserves();
+        address weth = uniswapRouter.WETH();
+
+        if (pair.token0() == weth) {
+            wethReserve = firstReserve;
+            token2Reserve = secondReserve;
+        }
+        else if (pair.token1() == weth) {
+            wethReserve = secondReserve;
+            token2Reserve = firstReserve;
+        }
+        else {
+            revert("Expected WETH to be one of the tokens in pair");
+        }
     }
 
     function swapEthForToken(address tokenAddress, uint ethAmount) internal returns (uint tokenAmount) {
