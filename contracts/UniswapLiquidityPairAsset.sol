@@ -81,7 +81,7 @@ contract UniswapLiquidityPairAsset is IAsset {
             uint token2Amount = liquidityAmount * uint256(token2Reserve) / pair.totalSupply();
             uint token2EthValue = uniswapRouter.quote(token2Amount, token2Reserve, wethReserve);
 
-            return uint256(wethAmount) + uint256(token2EthValue);
+            return uint256(wethAmount) + uint256(token2EthValue) + address(this).balance;
         }
         else {
             revert("Not implemented");
@@ -95,20 +95,14 @@ contract UniswapLiquidityPairAsset is IAsset {
     }
 
     function depositEth() fundOnly external override(IAsset) payable {
+        // Buy token 2 for 50% of ETH amount.
+        uint token2Amount = swapEthForToken(token2Address, msg.value / 2);
+        IERC20(token2Address).approve(address(uniswapRouter), token2Amount);
+
         if (token1Address == address(0)) { // Create pair with ETH.
-            address[] memory path = new address[](2);
-            path[0] = uniswapRouter.WETH();
-            path[1] = token2Address;
-            uint[] memory amounts = uniswapRouter.swapExactETHForTokens{ value: msg.value / 2 }(
-                0,
-                path,
-                address(this),
-                block.timestamp + 60 * 60
-            );
-            IERC20(token2Address).approve(address(uniswapRouter), amounts[1]);
             uniswapRouter.addLiquidityETH{ value: msg.value / 2 }(
                 token2Address,
-                amounts[1],
+                token2Amount,
                 0,
                 0,
                 address(this),
@@ -116,7 +110,18 @@ contract UniswapLiquidityPairAsset is IAsset {
             );
         }
         else { // Create pair for 2 non-ETH tokens.
-            revert("Not implemented");
+            uint token1Amount = swapEthForToken(token1Address, msg.value / 2);
+            IERC20(token1Address).approve(address(uniswapRouter), token1Amount);
+            uniswapRouter.addLiquidity(
+                token1Address,
+                token2Address,
+                token1Amount,
+                token2Amount,
+                0,
+                0,
+                address(this),
+                block.timestamp + 60 * 60
+            );
         }
     }
 
@@ -161,5 +166,19 @@ contract UniswapLiquidityPairAsset is IAsset {
 
     function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+    }
+
+    function swapEthForToken(address tokenAddress, uint ethAmount) internal returns (uint tokenAmount) {
+        address[] memory path = new address[](2);
+        path[0] = uniswapRouter.WETH();
+        path[1] = tokenAddress;
+        uint[] memory amounts = uniswapRouter.swapExactETHForTokens{ value: ethAmount }(
+            0,
+            path,
+            address(this),
+            block.timestamp + 60 * 60
+        );
+
+        return amounts[1];
     }
 }
