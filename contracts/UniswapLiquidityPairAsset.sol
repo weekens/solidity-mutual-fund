@@ -138,10 +138,11 @@ contract UniswapLiquidityPairAsset is IAsset {
     function withdrawEth(uint amount, address payable to) fundOnly external override(IAsset) {
         uint liquidityToBurn = this.getLiquidityAmount() * amount / this.getTotalBalance();
 
+        IERC20(this.getTokenAddress()).approve(address(uniswapRouter), liquidityToBurn);
+
         if (token1Address == address(0)) { // Pair with ETH.
             // Remove liquidity.
             // As a result, we get ETH and token2 tokens to this fund's address.
-            IERC20(this.getTokenAddress()).approve(address(uniswapRouter), liquidityToBurn);
             (uint token2Amount,) = uniswapRouter.removeLiquidityETH(
                 token2Address,
                 liquidityToBurn,
@@ -153,24 +154,39 @@ contract UniswapLiquidityPairAsset is IAsset {
             // Swap from token 2 to ETH.
             // Approve the Uniswap Router to spend the funds from this contract's address.
             IERC20(token2Address).approve(address(uniswapRouter2), token2Amount);
-            // Build swap path.
-            address[] memory path = new address[](2);
-            path[0] = token2Address;
-            path[1] = uniswapRouter.WETH();
             // Perform a swap from token 2 to ETH to this address.
-            uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                token2Amount,
-                0,
-                path,
-                address(this),
-                block.timestamp + 60 * 60
-            );
+            swapTokenForEth(token2Address, token2Amount);
 
             // Send all accumulated ETH to receiver.
             to.transfer(address(this).balance);
         }
-        else {
-            revert("Not implemented");
+        else { // ERC20-ERC20 token pair.
+            // Remove liquidity.
+            // As a result, we get both tokens to this fund's address.
+            (uint token1Amount, uint token2Amount) = uniswapRouter.removeLiquidity(
+                token1Address,
+                token2Address,
+                liquidityToBurn,
+                0,
+                0,
+                address(this),
+                block.timestamp + 60 * 60
+            );
+
+            // Swap from token 1 to ETH.
+            // Approve the Uniswap Router to spend the funds from this contract's address.
+            IERC20(token1Address).approve(address(uniswapRouter2), token1Amount);
+            // Perform a swap from token 2 to ETH to this address.
+            swapTokenForEth(token1Address, token1Amount);
+
+            // Swap from token 2 to ETH.
+            // Approve the Uniswap Router to spend the funds from this contract's address.
+            IERC20(token2Address).approve(address(uniswapRouter2), token2Amount);
+            // Perform a swap from token 2 to ETH to this address.
+            swapTokenForEth(token2Address, token2Amount);
+
+            // Send all accumulated ETH to receiver.
+            to.transfer(address(this).balance);
         }
     }
 
@@ -209,5 +225,20 @@ contract UniswapLiquidityPairAsset is IAsset {
         );
 
         return amounts[1];
+    }
+
+    function swapTokenForEth(address tokenAddress, uint tokenAmount) internal {
+        // Build swap path.
+        address[] memory path = new address[](2);
+        path[0] = tokenAddress;
+        path[1] = uniswapRouter.WETH();
+        // Perform a swap from token to ETH to this address.
+        uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            tokenAmount,
+            0,
+            path,
+            address(this),
+            block.timestamp + 60 * 60
+        );
     }
 }

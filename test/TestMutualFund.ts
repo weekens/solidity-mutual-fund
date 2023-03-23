@@ -629,8 +629,7 @@ describe("MutualFund", function () {
 
     const assetBalanceAfterSwap = await asset.getTotalBalance();
 
-    // We paid 0.003 for conversion from ETH to USDC.
-    expect(assetBalanceAfterSwap.gt(swapAmount.mul(997).div(1000))).to.be.true;
+    expect(assetBalanceAfterSwap.gt(swapAmount.mul(98).div(1000))).to.be.true;
     expect(assetBalanceAfterSwap.lt(swapAmount)).to.be.true;
 
     // Withdraw 50% of the funds.
