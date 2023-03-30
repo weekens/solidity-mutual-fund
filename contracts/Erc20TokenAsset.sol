@@ -3,8 +3,10 @@ pragma solidity >=0.6.6;
 
 import "./IAsset.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 
 // Asset holding a ERC20 token.
 contract Erc20TokenAsset is IAsset {
@@ -15,6 +17,8 @@ contract Erc20TokenAsset is IAsset {
     address fundAddress;
     string name;
 
+    IUniswapV2Factory private constant uniswapFactory =
+        IUniswapV2Factory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
     IUniswapV2Router01 private constant uniswapRouter =
         IUniswapV2Router01(0xf164fC0Ec4E93095b804a4795bBe1e041497b92a);
     IUniswapV2Router02 private constant uniswapRouter2 =
@@ -51,7 +55,13 @@ contract Erc20TokenAsset is IAsset {
     }
 
     function getTotalBalance() external override(IAsset) view returns (uint) {
-        return IERC20(tokenAddress).balanceOf(address(this));
+        // We calculate ETH value of the token through Uniswap liquidity pair.
+        IUniswapV2Pair wethTokenPair = IUniswapV2Pair(uniswapFactory.getPair(uniswapRouter.WETH(), tokenAddress));
+        (uint112 wethReserve, uint112 tokenReserve) = getWethPairReservesWethFirst(wethTokenPair);
+        uint tokenAmount = IERC20(tokenAddress).balanceOf(address(this));
+        uint tokenEthValue = uniswapRouter.quote(tokenAmount, tokenReserve, wethReserve);
+
+        return tokenEthValue + address(this).balance;
     }
 
     function depositEth() fundOnly external override(IAsset) payable {
@@ -97,6 +107,25 @@ contract Erc20TokenAsset is IAsset {
                 to,
                 block.timestamp + 60 * 60
             );
+        }
+    }
+
+    function getWethPairReservesWethFirst(
+        IUniswapV2Pair pair
+    ) internal view returns (uint112 wethReserve, uint112 tokenReserve) {
+        (uint112 firstReserve, uint112 secondReserve,) = pair.getReserves();
+        address weth = uniswapRouter.WETH();
+
+        if (pair.token0() == weth) {
+            wethReserve = firstReserve;
+            tokenReserve = secondReserve;
+        }
+        else if (pair.token1() == weth) {
+            wethReserve = secondReserve;
+            tokenReserve = firstReserve;
+        }
+        else {
+            revert("Expected WETH to be one of the tokens in pair");
         }
     }
 }

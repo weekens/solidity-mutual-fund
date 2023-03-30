@@ -196,17 +196,17 @@ contract UniswapLiquidityPairAsset is IAsset {
 
     function getWethPairReservesWethFirst(
         IUniswapV2Pair pair
-    ) internal view returns (uint112 wethReserve, uint112 token2Reserve) {
+    ) internal view returns (uint112 wethReserve, uint112 tokenReserve) {
         (uint112 firstReserve, uint112 secondReserve,) = pair.getReserves();
         address weth = uniswapRouter.WETH();
 
         if (pair.token0() == weth) {
             wethReserve = firstReserve;
-            token2Reserve = secondReserve;
+            tokenReserve = secondReserve;
         }
         else if (pair.token1() == weth) {
             wethReserve = secondReserve;
-            token2Reserve = firstReserve;
+            tokenReserve = firstReserve;
         }
         else {
             revert("Expected WETH to be one of the tokens in pair");
