@@ -136,7 +136,20 @@ contract UniswapLiquidityPairAsset is IAsset {
     }
 
     function withdrawEth(uint amount, address payable to) fundOnly external override(IAsset) {
-        uint liquidityToBurn = this.getLiquidityAmount() * amount / this.getTotalBalance();
+        uint ethBalance = address(this).balance;
+
+        if (ethBalance > 0) {
+            if (amount > ethBalance) {
+                to.transfer(ethBalance);
+            }
+            else {
+                to.transfer(amount);
+                return;
+            }
+        }
+
+        uint reducedAmount = amount - ethBalance;
+        uint liquidityToBurn = this.getLiquidityAmount() * reducedAmount / this.getTotalBalance();
 
         IERC20(this.getTokenAddress()).approve(address(uniswapRouter), liquidityToBurn);
 
