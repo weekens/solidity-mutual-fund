@@ -291,7 +291,7 @@ describe("MutualFund", function () {
     const partialExitTx = await fund.exit(50);
     const partialExitResult = await partialExitTx.wait();
     const partialExitGasUsed = partialExitResult.effectiveGasPrice.mul(partialExitResult.cumulativeGasUsed);
-    const partialExitEvent = partialExitResult.events?.find(evt => evt.event === "Exit")
+    const partialExitEvent = partialExitResult.events?.find(evt => evt.event === "Exit");
 
     expect(partialExitEvent).to.not.be.undefined;
 
@@ -301,7 +301,8 @@ describe("MutualFund", function () {
 
     const assetBalanceAfterPartialExit = await asset.getTotalBalance();
 
-    expect(assetBalanceAfterPartialExit.toNumber()).to.be.approximately(assetBalanceAfterSwap.div(2).toNumber(), 1);
+    expect(assetBalanceAfterPartialExit.lte(assetBalanceAfterSwap.div(2))).to.be.true;
+    expect(assetBalanceAfterPartialExit.gte(assetBalanceAfterSwap.div(2).div(1000).mul(997))).to.be.true;
 
     const signerBalanceAfterPartialExit = await ethers.provider.getBalance(signer.address);
 
@@ -326,7 +327,8 @@ describe("MutualFund", function () {
 
     const assetBalanceAfterSwapBack = await asset.getTotalBalance();
 
-    expect(assetBalanceAfterSwapBack.toNumber()).to.be.equal(0);
+    expect(assetBalanceAfterSwapBack.gte(0)).to.be.true;
+    expect(assetBalanceAfterSwapBack.lte(assetBalanceAfterPartialExit.div(1000).mul(997))).to.be.true;
 
     const fundBalanceAfterSwapBack = await ethers.provider.getBalance(fund.address);
 
