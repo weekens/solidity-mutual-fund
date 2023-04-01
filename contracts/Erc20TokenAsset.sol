@@ -77,8 +77,23 @@ contract Erc20TokenAsset is IAsset {
     }
 
     function withdrawEth(uint amount, address payable to) fundOnly external override(IAsset) {
+        uint ethBalance = address(this).balance;
+
+        if (ethBalance > 0) {
+            if (amount > ethBalance) {
+                to.transfer(ethBalance);
+            }
+            else {
+                to.transfer(amount);
+                return;
+            }
+        }
+
+        uint reducedAmount = amount - ethBalance;
+        uint tokenAmount = toTokenAmount(reducedAmount);
+
         // Approve the Uniswap Router to spend the funds from this contract's address.
-        IERC20(tokenAddress).approve(address(uniswapRouter2), amount);
+        IERC20(tokenAddress).approve(address(uniswapRouter2), tokenAmount);
 
         // Build swap path.
         address[] memory path = new address[](2);
@@ -90,7 +105,7 @@ contract Erc20TokenAsset is IAsset {
             // 1. Swap to this asset address.
             // 2. Transfer from this asset address to the fund through the special payable function.
             uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                amount,
+                tokenAmount,
                 0,
                 path,
                 address(this),
@@ -101,7 +116,7 @@ contract Erc20TokenAsset is IAsset {
         else {
             // Perform a swap from token to ETH to the given address.
             uniswapRouter2.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                amount,
+                tokenAmount,
                 0,
                 path,
                 to,
@@ -127,5 +142,13 @@ contract Erc20TokenAsset is IAsset {
         else {
             revert("Expected WETH to be one of the tokens in pair");
         }
+    }
+
+    function toTokenAmount(uint ethAmount) internal view returns (uint) {
+        // Use Uniswap liquidity pair to calculate token amount.
+        IUniswapV2Pair wethTokenPair = IUniswapV2Pair(uniswapFactory.getPair(uniswapRouter.WETH(), tokenAddress));
+        (uint112 wethReserve, uint112 tokenReserve) = getWethPairReservesWethFirst(wethTokenPair);
+
+        return uniswapRouter.quote(ethAmount, wethReserve, tokenReserve);
     }
 }
