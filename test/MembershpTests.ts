@@ -31,7 +31,7 @@ describe("Membership Tests", function () {
     const fund = await MutualFund.deploy(defaultFundConfig());
     const [founder, member1] = await ethers.getSigners();
 
-    await depositFunds(fund, founder.address, ethers.utils.parseEther("1000"));
+    await depositFunds(fund, founder.address, ethers.utils.parseEther("900"));
 
     const memberProposalId = await submitProposal(fund, founder.address, {
       proposalType: ProposalType.AddMember,
@@ -79,8 +79,9 @@ describe("Membership Tests", function () {
         value: ethers.utils.parseEther("100")
       }
     );
+    const endingFundBalance = await fund.getTotalBalance();
     const endingMemberBalance = (await fund.getMember(member1.address)).balance;
-    expect(endingMemberBalance.sub(ethers.utils.parseEther("100"))).to.be.equal(0);
+    expect(endingMemberBalance.eq(endingFundBalance.div(10))).to.be.true;
 
     await expect(
       fund.submitProposal(

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.6.6;
+pragma solidity >=0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "./IAsset.sol";
@@ -115,6 +115,17 @@ contract MutualFund {
         return totalBalance;
     }
 
+    // Returns total fund balance in ETH.
+    function getTotalEthBalance() public view returns (uint) {
+        uint balance = address(this).balance;
+
+        for (uint i = 0; i < assets.length; i++) {
+            balance += assets[i].getTotalBalance();
+        }
+
+        return balance;
+    }
+
     function getAssets() public view returns (IAsset[] memory) {
         return assets;
     }
@@ -153,9 +164,7 @@ contract MutualFund {
 
         if (proposalType == ProposalType.DepositFunds) {
             require(proposal.request.amount == msg.value, "The sent funds amount differs from proposed");
-            (Member storage member,) = findMemberByAddress(proposal.author);
-            member.balance += msg.value;
-            totalBalance += msg.value;
+            executeDepositFundsProposal(proposal);
         }
         else if (proposalType == ProposalType.AddAsset) {
             IAsset asset = IAsset(proposal.request.addresses[0]);
@@ -203,6 +212,16 @@ contract MutualFund {
                 i++;
             }
         }
+    }
+
+    function executeDepositFundsProposal(Proposal storage proposal) private {
+        (Member storage member,) = findMemberByAddress(proposal.author);
+        ProposalRequest storage request = proposal.request;
+        uint totalEthBalance = getTotalEthBalance();
+        uint balanceToMint =
+            request.amount * (totalBalance + request.amount) / totalEthBalance;
+        member.balance += balanceToMint;
+        totalBalance += balanceToMint;
     }
 
     function executeSwapProposal(ProposalRequest storage request) private {

@@ -59,7 +59,10 @@ contract Erc20TokenAsset is IAsset {
         IUniswapV2Pair wethTokenPair = IUniswapV2Pair(uniswapFactory.getPair(uniswapRouter.WETH(), tokenAddress));
         (uint112 wethReserve, uint112 tokenReserve) = getWethPairReservesWethFirst(wethTokenPair);
         uint tokenAmount = IERC20(tokenAddress).balanceOf(address(this));
-        uint tokenEthValue = uniswapRouter.quote(tokenAmount, tokenReserve, wethReserve);
+        uint tokenEthValue = 0;
+
+        if (tokenAmount > 0)
+            tokenEthValue = uniswapRouter.quote(tokenAmount, tokenReserve, wethReserve);
 
         return tokenEthValue + address(this).balance;
     }
