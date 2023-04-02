@@ -681,4 +681,6 @@ describe("MutualFund", function () {
 
     expect(fundBalanceAfterSwapBack.gt(fundBalanceAfterPartialExit)).to.be.true;
   });
+
+  it("should respect the market value of the assets when minting balance");
 });
