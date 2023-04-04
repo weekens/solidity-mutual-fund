@@ -217,11 +217,18 @@ contract MutualFund {
     function executeDepositFundsProposal(Proposal storage proposal) private {
         (Member storage member,) = findMemberByAddress(proposal.author);
         ProposalRequest storage request = proposal.request;
-        uint totalEthBalance = getTotalEthBalance();
-        uint balanceToMint =
-            request.amount * (totalBalance + request.amount) / totalEthBalance;
-        member.balance += balanceToMint;
-        totalBalance += balanceToMint;
+
+        if (totalBalance == 0) {
+            member.balance = request.amount;
+            totalBalance = request.amount;
+        }
+        else {
+            uint totalEthBalance = getTotalEthBalance();
+            uint balanceToMint =
+                request.amount * totalBalance / (totalEthBalance - request.amount);
+            member.balance += balanceToMint;
+            totalBalance += balanceToMint;
+        }
     }
 
     function executeSwapProposal(ProposalRequest storage request) private {
