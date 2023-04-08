@@ -24,6 +24,7 @@ The [`contracts`](./contracts) folder contains the code of the smart contract:
  asset smart contract
 - [`UniswapLiquidityPairAsset.sol`](./contracts/UniswapLiquidityPairAsset.sol) contains the Uniswap liquidity
  pair asset smart contract
+- [`TestAsset.sol`](./contracts/TestAsset.sol) contains a special asset smart contract used for testing purposes only
 
 The [`frontend`](./frontend) folder contains the implementation code for the fund's Web3 user interface.
 
