@@ -2,7 +2,14 @@ import {expect} from "chai";
 import {ethers} from "hardhat";
 import {time} from "@nomicfoundation/hardhat-network-helpers";
 import {MutualFund} from "../typechain-types";
-import {defaultFundConfig, depositFunds, executeProposal, ProposalType, submitProposal,} from './common';
+import {
+  defaultFundConfig,
+  depositFunds,
+  executeProposal,
+  ProposalType,
+  submitProposal,
+  voteForProposal,
+} from './common';
 
 const ERC20 = require("@openzeppelin/contracts/build/contracts/ERC20.json");
 
@@ -682,5 +689,119 @@ describe("MutualFund", function () {
     expect(fundBalanceAfterSwapBack.gt(fundBalanceAfterPartialExit)).to.be.true;
   });
 
-  it("should respect the market value of the assets when minting balance");
+  it("should respect the market value of the assets when minting balance", async () => {
+    const MutualFund = await ethers.getContractFactory("MutualFund");
+    const MutualFundAsset = await ethers.getContractFactory("TestAsset");
+    const fund = await MutualFund.deploy(defaultFundConfig());
+    const asset = await MutualFundAsset.deploy();
+
+    const assets = await fund.getAssets();
+
+    expect(assets).to.have.lengthOf(0);
+
+    const [member1, member2, market] = await ethers.getSigners();
+
+    const assetProposalId = await submitProposal(
+      fund,
+      member1.address,
+      {
+        proposalType: ProposalType.AddAsset,
+        amount: 0,
+        addresses: [asset.address],
+        name: ""
+      }
+    );
+
+    await executeProposal(
+      fund,
+      member1.address,
+      assetProposalId
+    );
+
+    const newAssets = await fund.getAssets();
+
+    expect(newAssets).to.have.lengthOf(1);
+    expect(newAssets[0]).to.be.equal(asset.address);
+
+    // member1 deposits 1 ETH.
+    await depositFunds(fund, member1.address, ethers.utils.parseEther("1"));
+
+    // member1 purchases 1 ETH worth of test asset.
+    const swapAmount = ethers.utils.parseEther("1");
+    const swapProposalId = await submitProposal(
+      fund,
+      member1.address,
+      {
+        proposalType: ProposalType.Swap,
+        amount: swapAmount,
+        addresses: [fund.address, asset.address],
+        name: ""
+      }
+    );
+    await executeProposal(
+      fund,
+      member1.address,
+      swapProposalId
+    );
+
+    const fundEthBalanceAfterSwap = await fund.getTotalEthBalance();
+
+    expect(fundEthBalanceAfterSwap.eq(ethers.utils.parseEther("1"))).to.be.true;
+
+    // The market value of the test asset grows 9X.
+    await asset
+      .connect(await ethers.getSigner(market.address))
+      .depositEth({ value: ethers.utils.parseEther("8") });
+
+    const fundEthBalanceAfterGrowth = await fund.getTotalEthBalance();
+
+    expect(fundEthBalanceAfterGrowth.eq(ethers.utils.parseEther("9"))).to.be.true;
+
+    // Add second member.
+    const member2Proposal = await submitProposal(fund, member1.address, {
+      proposalType: ProposalType.AddMember,
+      name: "member2",
+      amount: 0,
+      addresses: [member2.address]
+    });
+    await executeProposal(fund, member1.address, member2Proposal);
+
+    // member2 deposits 1 ETH.
+    const oneEth = ethers.utils.parseEther("1");
+    const member2FundsProposal = await submitProposal(fund, member2.address, {
+      proposalType: ProposalType.DepositFunds,
+      name: "",
+      amount: oneEth,
+      addresses: []
+    });
+    await voteForProposal(fund, member1.address, member2FundsProposal);
+    await executeProposal(fund, member2.address, member2FundsProposal, oneEth);
+
+    const fundEthBalanceAfterMember2Deposit = await fund.getTotalEthBalance();
+
+    expect(fundEthBalanceAfterMember2Deposit.eq(ethers.utils.parseEther("10"))).to.be.true;
+
+    const member2BalanceAfterDeposit = await member2.getBalance();
+
+    // member2 exits.
+    const exitTx = await fund.connect(await ethers.getSigner(member2.address)).exit(100);
+    const exitResult = await exitTx.wait();
+    const exitGasUsed = exitResult.effectiveGasPrice.mul(exitResult.cumulativeGasUsed);
+
+    const fundEthBalanceAfterMember2Exit = await fund.getTotalEthBalance();
+    const expectedFundBalanceAfterMember2Exit = ethers.utils.parseEther("9");
+    // Share calculation may be unprecise.
+    const fundBalanceDiff = fundEthBalanceAfterMember2Exit.sub(expectedFundBalanceAfterMember2Exit);
+
+    expect(fundBalanceDiff.gte(0)).to.be.true;
+    expect(fundBalanceDiff.lte(30)).to.be.true;
+
+    const member2BalanceAfterExit = await member2.getBalance();
+    const expectedMemberBalance = member2BalanceAfterDeposit
+      .add(oneEth)
+      .sub(exitGasUsed)
+      .sub(fundBalanceDiff);
+
+    expect(member2BalanceAfterExit.eq(expectedMemberBalance)).to.be.true;
+  });
 });
