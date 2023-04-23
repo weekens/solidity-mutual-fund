@@ -5,6 +5,7 @@ import { MemberModel } from "../models/MemberModel";
 import { BlockchainAddress } from "./BlockchainAddress";
 
 interface AccountInfoProps {
+  totalEthBalance: BigNumber;
   totalBalance: BigNumber;
   member: MemberModel;
 }
@@ -24,7 +25,7 @@ export function AccountInfo(props: AccountInfoProps): ReactElement {
         Total balance:
       </Grid>
       <Grid item xs={6}>
-        {ethers.utils.formatEther(props.totalBalance)} ETH
+        {ethers.utils.formatEther(props.totalEthBalance)} ETH
       </Grid>
       <Grid item xs={6}>
         Your balance:

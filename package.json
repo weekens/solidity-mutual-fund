@@ -9,6 +9,7 @@
     "compile-contracts": "npx hardhat compile",
     "build": "npm run compile-contracts && cd frontend && npm run build",
     "start": "cd frontend && npx serve -s build",
+    "start:dev": "cd frontend && npm run start",
     "deploy-contracts-testnet": "npm run compile-contracts && npx hardhat run scripts/deploy.ts --network goerli",
     "deploy-test-asset-testnet": "npm run compile-contracts && npx hardhat run scripts/deploy-test-asset.ts --network goerli"
   },

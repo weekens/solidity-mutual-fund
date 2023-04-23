@@ -8,6 +8,8 @@ export interface MutualFundContract {
 
   getTotalBalance(): Promise<BigNumber>;
 
+  getTotalEthBalance(): Promise<BigNumber>;
+
   getMembers(): Promise<MemberModel[]>;
 
   getProposals(): Promise<ProposalModel[]>;

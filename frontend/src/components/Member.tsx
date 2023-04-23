@@ -8,9 +8,17 @@ import { Card, CardContent } from "@mui/material";
 export interface MemberProps {
   model: MemberModel;
   totalBalance: BigNumber;
+  totalEthBalance: BigNumber;
 }
 
 export function Member(props: MemberProps): ReactElement {
+  const memberEthBalance = props.totalBalance.gt(0) ?
+    props.model.balance.mul(props.totalEthBalance).div(props.totalBalance) :
+    BigNumber.from(0);
+  const memberSharePercent = props.totalBalance.gt(0) ?
+    props.model.balance.mul(100).div(props.totalBalance) :
+    BigNumber.from(0);
+
   return (
     <Card>
       <CardContent>
@@ -31,8 +39,8 @@ export function Member(props: MemberProps): ReactElement {
             Balance:
           </Grid>
           <Grid item xs={6}>
-            {ethers.utils.formatEther(props.model.balance)} ETH (
-            {props.model.balance.mul(100).div(props.totalBalance).toNumber()}%)
+            {ethers.utils.formatEther(memberEthBalance)} ETH (
+            {memberSharePercent.toNumber()}%)
           </Grid>
         </Grid>
       </CardContent>

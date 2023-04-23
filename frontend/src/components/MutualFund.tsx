@@ -71,6 +71,7 @@ export function MutualFund(): ReactElement {
   const [contract, setContract] = useState<MutualFundContract>();
   const [tabIndex, setTabIndex] = useState<number>(0);
   const [totalBalance, setTotalBalance] = useState<BigNumber>(BigNumber.from(0));
+  const [totalEthBalance, setTotalEthBalance] = useState<BigNumber>(BigNumber.from(0));
   const [members, setMembers] = useState<MemberModel[]>([]);
   const [selfMember, setSelfMember] = useState<MemberModel>();
   const [proposals, setProposals] = useState<ProposalModel[]>([]);
@@ -125,11 +126,17 @@ export function MutualFund(): ReactElement {
     if (!contract) return;
 
     const loadData = async () => {
-      const totalBalance = await contract.getTotalBalance();
-
-      setTotalBalance(totalBalance);
-
       await Promise.all([
+        contract.getTotalEthBalance().then((totalEthBalance: BigNumber) => {
+          console.log("totalEthBalance =", totalEthBalance);
+
+          setTotalEthBalance(totalEthBalance);
+        }),
+        contract.getTotalBalance().then((totalBalance: BigNumber) => {
+          console.log("totalBalance =", totalBalance);
+
+          setTotalBalance(totalBalance);
+        }),
         contract.getMembers().then((members: MemberModel[]) => {
           console.log("members =", members);
 
@@ -208,14 +215,23 @@ export function MutualFund(): ReactElement {
             </Tabs>
           </Box>
           <TabPanel value={tabIndex} index={0}>
-            <AccountInfo totalBalance={totalBalance} member={selfMember} />
+            <AccountInfo
+              totalBalance={totalBalance}
+              totalEthBalance={totalEthBalance}
+              member={selfMember}
+            />
           </TabPanel>
           <TabPanel value={tabIndex} index={1}>
             <Stack gap="15px">
               {
                 members.map((member) => {
                   return (
-                    <Member key={member.addr} model={member} totalBalance={totalBalance} />
+                    <Member
+                      key={member.addr}
+                      model={member}
+                      totalBalance={totalBalance}
+                      totalEthBalance={totalEthBalance}
+                    />
                   )
                 })
               }
