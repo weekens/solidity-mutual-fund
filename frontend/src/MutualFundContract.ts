@@ -6,6 +6,8 @@ import { ProposalSubmissionModel } from "./models/ProposalSubmissionModel";
 
 export interface MutualFundContract {
 
+  getVersion(): Promise<string>;
+
   getTotalBalance(): Promise<BigNumber>;
 
   getTotalEthBalance(): Promise<BigNumber>;

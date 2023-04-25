@@ -5,6 +5,7 @@ import { MemberModel } from "../models/MemberModel";
 import { BlockchainAddress } from "./BlockchainAddress";
 
 interface AccountInfoProps {
+  fundContractVersion: string;
   totalEthBalance: BigNumber;
   totalBalance: BigNumber;
   member: MemberModel;
@@ -20,6 +21,12 @@ export function AccountInfo(props: AccountInfoProps): ReactElement {
       </Grid>
       <Grid item xs={6}>
         <BlockchainAddress address={fundAddress} />
+      </Grid>
+      <Grid item xs={6}>
+        Fund contract version:
+      </Grid>
+      <Grid item xs={6}>
+        {props.fundContractVersion}
       </Grid>
       <Grid item xs={6}>
         Total balance:

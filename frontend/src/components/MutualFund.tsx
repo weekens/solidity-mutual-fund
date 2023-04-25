@@ -70,6 +70,7 @@ export function MutualFund(): ReactElement {
   const [signer, setSigner] = useState<Signer>();
   const [contract, setContract] = useState<MutualFundContract>();
   const [tabIndex, setTabIndex] = useState<number>(0);
+  const [fundContractVersion, setFundContractVersion] = useState<string>("");
   const [totalBalance, setTotalBalance] = useState<BigNumber>(BigNumber.from(0));
   const [totalEthBalance, setTotalEthBalance] = useState<BigNumber>(BigNumber.from(0));
   const [members, setMembers] = useState<MemberModel[]>([]);
@@ -127,6 +128,11 @@ export function MutualFund(): ReactElement {
 
     const loadData = async () => {
       await Promise.all([
+        contract.getVersion().then((version: string) => {
+          console.log("version =", version);
+
+          setFundContractVersion(version);
+        }),
         contract.getTotalEthBalance().then((totalEthBalance: BigNumber) => {
           console.log("totalEthBalance =", totalEthBalance);
 
@@ -216,6 +222,7 @@ export function MutualFund(): ReactElement {
           </Box>
           <TabPanel value={tabIndex} index={0}>
             <AccountInfo
+              fundContractVersion={fundContractVersion}
               totalBalance={totalBalance}
               totalEthBalance={totalEthBalance}
               member={selfMember}
