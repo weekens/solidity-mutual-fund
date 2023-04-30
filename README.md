@@ -1,5 +1,7 @@
 # Solidity Mutual Fund
 
+![](images/solidity-mutual-fund-purpose.jpg)
+
 This project implements an Ethereum smart contract and a user interface for the zero-trust mutual fund
  [DAO](https://en.wikipedia.org/wiki/Decentralized_autonomous_organization).
 
