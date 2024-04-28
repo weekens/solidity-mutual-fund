@@ -13,7 +13,7 @@ const config: HardhatUserConfig = {
         blockNumber: 14390000
       }
     },
-    goerli: {
+    sepolia: {
       url: API_URL,
       accounts: [`0x${PRIVATE_KEY}`]
     }
